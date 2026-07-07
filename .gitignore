@@ -1,0 +1,23 @@
+# Cache do Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.pytest_cache/
+.ruff_cache/
+
+# Ambientes virtuais (caso crie um local)
+.venv/
+venv/
+ENV/
+
+# Arquivos de configuração local / Senhas (Pydantic Settings)
+.env
+
+# Banco de dados local (SQLite)
+*.db
+*.sqlite3
+
+# Pastas do sistema ou IDEs
+.vscode/
+.idea/
