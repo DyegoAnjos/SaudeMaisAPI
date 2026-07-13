@@ -1,23 +1,32 @@
-from datetime import date
 from http import HTTPStatus
 
-from fastapi import FastAPI, HTTPException
-from sqlalchemy import create_engine, select
+from fastapi import (
+    Depends,
+    FastAPI,
+    HTTPException,
+)
+from sqlalchemy import select
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
+from saudemaisapi.database import get_db
 from saudemaisapi.models import Evento
 from saudemaisapi.schemas import EventoGet, EventoPost, EventosList, Message
-from saudemaisapi.settings import Settings
 
 app = FastAPI(title='Saude+API')
+
 
 bd = []
 
 
 # GET
 @app.get('/eventos/', status_code=HTTPStatus.OK, response_model=EventosList)
-def listar_eventos():
-    return {'eventos': bd}
+def listar_eventos(
+    limit: int = 10, offset: int = 0, session: Session = Depends(get_db)
+):
+    eventos = session.scalars(select(Evento).limit(limit).offset(offset))
+
+    return {'eventos': eventos}
 
 
 @app.get(
@@ -25,12 +34,16 @@ def listar_eventos():
     status_code=HTTPStatus.OK,
     response_model=EventoGet,
 )
-def listar_eventos_por_id(id_evento: int):
-    if id_evento < 0 or id_evento > len(bd):
+def listar_eventos_por_id(id_evento: int, session: Session = Depends(get_db)):
+
+    eventos = session.scalar(select(Evento).where(Evento.id == id_evento))
+
+    if not eventos:
         raise HTTPException(
             status_code=HTTPStatus.NOT_FOUND, detail='Evento não encontrado'
         )
-    return bd[id_evento - 1].model_dump()
+
+    return eventos
 
 
 # POST
@@ -39,12 +52,7 @@ def listar_eventos_por_id(id_evento: int):
     status_code=HTTPStatus.CREATED,
     response_model=EventoGet,
 )
-def criar_eventos(evento: EventoPost):
-
-    engine = create_engine(Settings().DATABASE_URL)
-
-    session = Session(engine)
-
+def criar_eventos(evento: EventoPost, session: Session = Depends(get_db)):
     evento_bd = session.scalar(
         select(Evento).where(Evento.titulo == evento.titulo)
     )
@@ -60,6 +68,8 @@ def criar_eventos(evento: EventoPost):
     session.add(evento_bd)
     session.commit()
 
+    session.refresh(evento_bd)
+
     return evento_bd
 
 
@@ -69,21 +79,28 @@ def criar_eventos(evento: EventoPost):
     status_code=HTTPStatus.OK,
     response_model=EventoGet,
 )
-def atualizar_evento(evento: EventoPost, id_evento: int):
-    if id_evento < 0 or id_evento > len(bd):
+def atualizar_evento(
+    evento: EventoPost, id_evento: int, session: Session = Depends(get_db)
+):
+    evento_bd = session.scalar(select(Evento).where(Evento.id == id_evento))
+    if not evento_bd:
         raise HTTPException(
             status_code=HTTPStatus.NOT_FOUND, detail='Evento não encontrado'
         )
 
-    evento_basic = EventoGet(
-        **evento.model_dump(),
-        id=id_evento,
-        status='Pendente',
-        data_criacao=date.today().isoformat(),
-    )
-    bd[id_evento - 1] = evento_basic
+    try:
+        for chave, valor in evento.model_dump(exclude_unset=True).items():
+            setattr(evento_bd, chave, valor)
 
-    return evento_basic
+        session.commit()
+        session.refresh(evento_bd)
+
+        return evento_bd
+    except IntegrityError:
+        raise HTTPException(
+            status_code=HTTPStatus.CONFLICT,
+            detail='Evento já existe!',
+        )
 
 
 # DELETE
@@ -92,12 +109,13 @@ def atualizar_evento(evento: EventoPost, id_evento: int):
     status_code=HTTPStatus.OK,
     response_model=Message,
 )
-def remover_evento(id_evento: int):
-    if id_evento < 0 or id_evento > len(bd):
+def remover_evento(id_evento: int, session: Session = Depends(get_db)):
+    evento_bd = session.scalar(select(Evento).where(Evento.id == id_evento))
+    if not evento_bd:
         raise HTTPException(
             status_code=HTTPStatus.NOT_FOUND, detail='Evento não encontrado'
         )
-
-    del bd[id_evento - 1]
+    session.delete(evento_bd)
+    session.commit()
 
     return {'mensagem': 'Evento removido com sucesso!'}
