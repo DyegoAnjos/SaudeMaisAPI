@@ -18,6 +18,7 @@ app = FastAPI(title='Saude+API')
 
 bd = []
 
+# Eventos
 
 # GET
 @app.get('/eventos/', status_code=HTTPStatus.OK, response_model=EventosList)

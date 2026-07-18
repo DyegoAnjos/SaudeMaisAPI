@@ -10,8 +10,17 @@ class Comentario(BaseModel):
     # Garante compatibilidade ORM
     id: int
     nota: int
+    titulo: str
+    conteudo: str
+    data_hora_feito: datetime
+    usuario: int
+
+
+class Categoria(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+    id: int
+    nome: str
     descricao: str
-    id_usuario: int
 
 
 class Message(BaseModel):
@@ -24,34 +33,39 @@ class EventoPost(BaseModel):
     titulo: str
     descricao: str | None = None
     endereco: str | None = None
-    foto_evento: int
-    link_externo: str | None = None
-    tipo_evento: int
+    foto_evento: int  # passar arquivo
+    pagina_evento: str | None = None
+    categoria: int
     capacidade_maxima: int | None = None
-    data: datetime | date
+    data_hora: datetime | date
+    # publico alvo
+    # data_hora_fim
 
 
 class EventoGet(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
     id: int
-    usuario_criador: int
-    unidade_associada: int | None = None
     titulo: str
-    descricao: str | None = None
+    descricao: str
     endereco: str | None = None
+    pagina_evento: str | None = None
     foto_evento: int
-    link_externo: str | None = None
-    tipo_evento: int
-    status: str | None = None
-    qtd_inscricoes: int = 0
+    publico_alvo: str
+    categoria: Categoria
+    status: str
+
+    unidade_associada: int | None = None
+
+    data_hora_criacao: datetime
+    data_hora_evento: datetime
+    data_hora_fim: datetime
+
+    quantidade_inscricao: int = 0
     capacidade_maxima: int | None = None
 
-    # Flexibilidade total para as datas vindas do SQLite
-    data: datetime | date | str
-    data_criacao: datetime | date | str
-    data_cancelamento: datetime | date | str | None = None
-    data_ultima_atualizacao: datetime | date | str | None = None
+    data_cancelamento: datetime | None = None
+    data_ultima_atualizacao: datetime | None = None
 
     comentarios: list[Comentario] = []
 
