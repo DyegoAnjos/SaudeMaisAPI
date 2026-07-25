@@ -69,10 +69,23 @@ def usuario_comum(session):
 
     return usuario
 
-
 @pytest.fixture
 def usuario_institucional(session):
-    usuario = Usuario_institucional()
+    usuario = Usuario_institucional(
+        email='institucional@gmail.com',
+        nome='institutoExemplo',
+        senha='segredo',
+        cnpj='123456',
+        vinculo_institucao='Posto',
+        descricao='Posto de saúde',
+        endereco= 'Pavuna'
+    )
+
+    session.add(usuario)
+    session.commit()
+    session.refresh(usuario)
+
+    return usuario
 
 
 @pytest.fixture
