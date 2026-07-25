@@ -198,7 +198,9 @@ class Evento:
     capacidade_maxima: Mapped[int | None] = mapped_column(default=None)
     unidade_associada: Mapped[int | None] = mapped_column(default=None)
     endereco: Mapped[str | None] = mapped_column(default=None)
-    data_cancelamento: Mapped[datetime | None] = mapped_column(default=None)
+    data_hora_cancelamento: Mapped[datetime | None] = mapped_column(
+        default=None
+    )
 
     data_ultima_atualizacao: Mapped[datetime | None] = mapped_column(
         DateTime, init=False, onupdate=func.now(), default=None

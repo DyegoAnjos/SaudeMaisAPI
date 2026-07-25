@@ -11,14 +11,21 @@ from sqlalchemy.orm import Session
 
 from saudemaisapi.database import get_db
 from saudemaisapi.models import Evento
-from saudemaisapi.schemas import EventoGet, EventoPost, EventosList, Message
+from saudemaisapi.schemas import (
+    EventoInput,
+    EventoRetorno,
+    EventosList,
+    Message,
+)
 
 app = FastAPI(title='Saude+API')
 
 
 bd = []
 
+
 # Eventos
+
 
 # GET
 @app.get('/eventos/', status_code=HTTPStatus.OK, response_model=EventosList)
@@ -33,7 +40,7 @@ def listar_eventos(
 @app.get(
     '/eventos/{id_evento}',
     status_code=HTTPStatus.OK,
-    response_model=EventoGet,
+    response_model=EventoRetorno,
 )
 def listar_eventos_por_id(id_evento: int, session: Session = Depends(get_db)):
 
@@ -51,9 +58,9 @@ def listar_eventos_por_id(id_evento: int, session: Session = Depends(get_db)):
 @app.post(
     '/criar_evento/',
     status_code=HTTPStatus.CREATED,
-    response_model=EventoGet,
+    response_model=EventoRetorno,
 )
-def criar_eventos(evento: EventoPost, session: Session = Depends(get_db)):
+def criar_eventos(evento: EventoInput, session: Session = Depends(get_db)):
     evento_bd = session.scalar(
         select(Evento).where(Evento.titulo == evento.titulo)
     )
@@ -78,10 +85,10 @@ def criar_eventos(evento: EventoPost, session: Session = Depends(get_db)):
 @app.put(
     '/atualizar_evento/{id_evento}',
     status_code=HTTPStatus.OK,
-    response_model=EventoGet,
+    response_model=EventoRetorno,
 )
 def atualizar_evento(
-    evento: EventoPost, id_evento: int, session: Session = Depends(get_db)
+    evento: EventoInput, id_evento: int, session: Session = Depends(get_db)
 ):
     evento_bd = session.scalar(select(Evento).where(Evento.id == id_evento))
     if not evento_bd:

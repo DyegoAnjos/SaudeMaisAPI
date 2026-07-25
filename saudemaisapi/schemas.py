@@ -1,75 +1,170 @@
-from datetime import date, datetime
+from datetime import datetime
 
 from pydantic import BaseModel, ConfigDict
 
+
 # Arquivo que gerencia o formato de entradas e retornos
-
-
-class Comentario(BaseModel):
-    model_config = ConfigDict(from_attributes=True)
-    # Garante compatibilidade ORM
-    id: int
-    nota: int
-    titulo: str
-    conteudo: str
-    data_hora_feito: datetime
-    usuario: int
-
-
-class Categoria(BaseModel):
-    model_config = ConfigDict(from_attributes=True)
-    id: int
-    nome: str
-    descricao: str
-
-
 class Message(BaseModel):
     mensagem: str
 
 
-class EventoPost(BaseModel):
-    usuario_criador: int
-    unidade_associada: int | None = None
+class Usuario(BaseModel):
+    email: str
+    nome: str
+    senha: str
+    # foto_perfil
+
+
+class Usuario_adiministrador(Usuario):
+    telefone: str
+
+
+class Usuario_comum(Usuario_adiministrador):
+    cpf: str
+    data_nascimento: datetime
+    regiao_preferida: str
+
+
+class Usuario_institucional(Usuario):
+    cnpj: str
+    vinculo_instituicao: str
+    descricao: str
+    endereco: str
+
+
+class Usuario_retorno(Usuario):
+    model_config = ConfigDict(from_attributes=True)
+    id: int
+
+
+class Usuario_comum_retorno(Usuario_comum):
+    model_config = ConfigDict(from_attributes=True)
+    id: int
+
+
+class Usuario_administrador_retorno(Usuario_adiministrador):
+    model_config = ConfigDict(from_attributes=True)
+    id: int
+
+
+class Usuario_institucional_retorno(Usuario_institucional):
+    model_config = ConfigDict(from_attributes=True)
+    id: int
+    status: str = 'Pendente'
+
+
+class Sugestao(BaseModel):
     titulo: str
-    descricao: str | None = None
-    endereco: str | None = None
-    foto_evento: int  # passar arquivo
-    pagina_evento: str | None = None
-    categoria: int
+    conteudo: str
+
+    usuario: int
+
+
+class Sugestao_retorno(Sugestao):
+    model_config = ConfigDict(from_attributes=True)
+    id: int
+    data_hora_envio: datetime
+
+
+class Comentario(BaseModel):
+    nota: int
+    titulo: str
+    conteudo: str
+
+    usuario: int
+    evento: int
+
+
+class Comentario_retorno(Comentario):
+    model_config = ConfigDict(from_attributes=True)
+    # Garante compatibilidade ORM
+    id: int
+
+    data_hora_feito: datetime
+
+
+class Inscricao(BaseModel):
+    usuario: int
+    evento: int
+
+
+class Inscricao_retorno(Inscricao):
+    model_config = ConfigDict(from_attributes=True)
+    id: int
+
+
+class Unidade_saude(BaseModel):
+    nome: str
+    endereco: str
+
+    latitude: float
+    longitude: float
+    lotacao: int
+
+    tempo_medio_atendimento: int
+    especialidade: str
+
+
+class Unidade_saude_retorno(Unidade_saude):
+    model_config = ConfigDict(from_attributes=True)
+    id: int
+
+
+class Categoria(BaseModel):
+    nome: str
+    descricao: str
+
+
+class Categoria_retorno(Categoria):
+    model_config = ConfigDict(from_attributes=True)
+    id: int
+
+
+class Fotografias(BaseModel):
+    nome: str
+    arquivo: str
+    foto_de_evento: bool
+
+
+class Fotografia_retorno(Fotografias):
+    model_config = ConfigDict(from_attributes=True)
+    id: int
+
+    data_hora_envio: datetime
+
+
+class Evento(BaseModel):
+    titulo: str
+    descricao: str
+    data_hora_evento: datetime
+    data_hora_fim: datetime
+    publico_alvo: str
+
+    categoria: Categoria
+    # foto_evento:
+    criador_institucional: int
+
     capacidade_maxima: int | None = None
-    data_hora: datetime | date
-    # publico alvo
-    # data_hora_fim
+    unidade_associada: int | None = None
+    endereco: str | None
+    pagina_evento: str | None = None
 
 
-class EventoGet(BaseModel):
+class Evento_retorno(Evento):
     model_config = ConfigDict(from_attributes=True)
 
     id: int
-    titulo: str
-    descricao: str
-    endereco: str | None = None
-    pagina_evento: str | None = None
-    foto_evento: int
-    publico_alvo: str
-    categoria: Categoria
+    inscricoes_atuais: int = 0
+
     status: str
 
-    unidade_associada: int | None = None
-
     data_hora_criacao: datetime
-    data_hora_evento: datetime
-    data_hora_fim: datetime
-
-    quantidade_inscricao: int = 0
-    capacidade_maxima: int | None = None
-
     data_cancelamento: datetime | None = None
     data_ultima_atualizacao: datetime | None = None
 
-    comentarios: list[Comentario] = []
+    comentarios: list[Comentario_retorno] = []
 
 
 class EventosList(BaseModel):
     model_config = ConfigDict(from_attributes=True)
-    eventos: list[EventoGet]
+    eventos: list[Evento_retorno]

@@ -1,22 +1,23 @@
 from http import HTTPStatus
 
-from saudemaisapi.schemas import EventoGet
+from saudemaisapi.schemas import EventoRetorno
 
 
 def teste_criar_evento(client, mock_db_time):
     resposta = client.post(
         '/criar_evento/',
         json={
-            'usuario_criador': 1,
-            'unidade_associada': 2,
             'titulo': 'Vem Zumbar 2',
             'descricao': 'Evento de zumba',
-            'endereco': 'Pérola Negra',
-            'foto_evento': 1,
-            'link_externo': 'www.linkExterno.com',
-            'tipo_evento': 1,
+            'data_hora_evento': '2026-07-26',
+            'data_hora_fim': '2026-08-10',
+            'publico_alvo': 'Idosos',
+            'categoria': 'Zumba',
+            'criador_institucional': 2,
             'capacidade_maxima': 20,
-            'data': '2026-07-10',
+            'unidade_associada': 2,
+            'endereco': 'Arena Jovelina',
+            'pagina_evento': 'www.VemZumbar.com'
         },
     )
     assert resposta.status_code == HTTPStatus.CREATED
@@ -62,7 +63,7 @@ def test_criar_evento_existente(client, mock_db_time, evento):
 
 
 def teste_listar_eventos(client, evento, mock_db_time):
-    evento_schema = EventoGet.model_validate(evento).model_dump()
+    evento_schema = EventoRetorno.model_validate(evento).model_dump()
 
     evento_schema['data_criacao'] = mock_db_time.isoformat()
     evento_schema['data'] = mock_db_time.date().isoformat()
@@ -86,7 +87,7 @@ def teste_listar_eventos_por_id_not_found(client):
 
 
 def teste_listar_evento_por_id(client, evento, mock_db_time):
-    evento_schema = EventoGet.model_validate(evento).model_dump()
+    evento_schema = EventoRetorno.model_validate(evento).model_dump()
 
     evento_schema['data_criacao'] = mock_db_time.isoformat()
     evento_schema['data'] = mock_db_time.date().isoformat()
