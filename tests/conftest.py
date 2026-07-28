@@ -8,8 +8,10 @@ from sqlalchemy.pool import StaticPool
 
 from saudemaisapi.app import app
 from saudemaisapi.database import get_db
-from saudemaisapi.models import Evento, registrador_tabela
-from saudemaisapi.schemas import Usuario, Usuario_comum
+from saudemaisapi.models import (Evento, registrador_tabela, Sugestao,
+                                 Usuario_comum, Usuario_institucional,
+                                 Usuario_administrador, Comentario, Unidade_saude, Categoria)
+from saudemaisapi.schemas import Usuario
 
 
 @pytest.fixture
@@ -47,12 +49,17 @@ def mock_db_time():
     def fake_time_hook(mapper, connection, target):
         if hasattr(target, 'data_criacao'):
             target.data_criacao = time
+        elif hasattr(target, 'data_hora_envio'):
+            target.data_hora_envio = time
+        elif hasattr(target, 'data_hora_feito'):
+            target.data_hora_feito = time
 
     event.listen(Evento, 'before_insert', fake_time_hook)
 
     yield time
 
     event.remove(Evento, 'before_insert', fake_time_hook)
+
 @pytest.fixture
 def usuario_comum(session):
     usuario = Usuario_comum(
@@ -61,7 +68,8 @@ def usuario_comum(session):
         senha='segredo',
         cpf='123456',
         data_nascimento=datetime(2026, 7, 10, 10, 10),
-        regiao_preferida= 'Urca'
+        regiao_preferida= 'Urca',
+        telefone='123456'
     )
     session.add(usuario)
     session.commit()
@@ -78,7 +86,8 @@ def usuario_institucional(session):
         cnpj='123456',
         vinculo_institucao='Posto',
         descricao='Posto de saúde',
-        endereco= 'Pavuna'
+        endereco= 'Pavuna',
+        telefone='123456'
     )
 
     session.add(usuario)
@@ -87,6 +96,83 @@ def usuario_institucional(session):
 
     return usuario
 
+@pytest.fixture
+def usuario_administrador(session):
+    usuario = Usuario_administrador(
+        email='institucional@gmail.com',
+        nome='institutoExemplo',
+        senha='segredo',
+        telefone='123456'
+    )
+
+    session.add(usuario)
+    session.commit()
+    session.refresh(usuario)
+
+    return usuario
+
+@pytest.fixture
+def sugestao(session):
+    sugestao = Sugestao(
+        titulo='Trocar o nome',
+        conteudo='Seria bom trocar o nome',
+        data_hora_envio=mock_db_time,
+        usuario = 1
+    )
+
+    session.add(sugestao)
+    session.commit()
+    session.refresh(sugestao)
+
+    return sugestao
+
+@pytest.fixture
+def comentario(session):
+    comentario = Comentario(
+        data_hora_feito = mock_db_time,
+        titulo = 'Evento top',
+        conteudo= 'Esse evento é muito bom!',
+        usuario= 1,
+        evento= 1,
+        nota = 5
+    )
+
+    session.add(comentario)
+    session.commit()
+    session.refresh(comentario)
+
+    return comentario
+
+@pytest.fixture
+def unidade_saude(session):
+    unidade_saude = Unidade_saude(
+        nome= 'Posto X',
+        endereco= 'Urca',
+        latitude= 1.5,
+        longitude= 1.6,
+        lotacao= 10,
+        tempo_medio_atendimento= 50,
+        especialidade= 'Coração'
+    )
+
+    session.add(unidade_saude)
+    session.commit()
+    session.refresh(unidade_saude)
+
+    return unidade_saude
+
+@pytest.fixture
+def categoria(session):
+    categoria = Categoria(
+        nome='Zumba',
+        descricao='Evendos da modalidade Zumba'
+    )
+
+    session.add(categoria)
+    session.commit()
+    session.refresh(categoria)
+
+    return categoria
 
 @pytest.fixture
 def evento(session, mock_db_time):

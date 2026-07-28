@@ -7,7 +7,7 @@ registrador_tabela = registry()
 
 
 @mapped_as_dataclass(registrador_tabela)
-class Usuario_Comum:
+class Usuario_comum:
     __tablename__ = 'usuario_comum'
 
     id: Mapped[int] = mapped_column(
@@ -20,7 +20,7 @@ class Usuario_Comum:
     senha: Mapped[str]
     data_nascimento: Mapped[datetime]
 
-    telefone: Mapped[int] = mapped_column(default=0)
+    telefone: Mapped[str] = mapped_column(default= None)
 
     foto_perfil: Mapped[int | None] = mapped_column(
         ForeignKey('fotografias.id'), default=None
@@ -41,7 +41,7 @@ class Usuario_administrador:
     nome: Mapped[str]
     senha: Mapped[str]
 
-    telefone: Mapped[int] = mapped_column(default=0)
+    telefone: Mapped[str] = mapped_column(default= None)
 
     foto_perfil: Mapped[int | None] = mapped_column(
         ForeignKey('fotografias.id'), default=None
@@ -59,6 +59,7 @@ class Usuario_institucional:
     nome: Mapped[str] = mapped_column(unique=True)
     cnpj: Mapped[str] = mapped_column(unique=True)
 
+    telefone: Mapped[str] = mapped_column(default=None)
     senha: Mapped[str]
     vinculo_instituicao: Mapped[str]
 
