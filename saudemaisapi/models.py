@@ -59,11 +59,13 @@ class Usuario_institucional:
     nome: Mapped[str] = mapped_column(unique=True)
     cnpj: Mapped[str] = mapped_column(unique=True)
 
-    telefone: Mapped[str] = mapped_column(default=None)
+
     senha: Mapped[str]
     vinculo_instituicao: Mapped[str]
 
     status: Mapped[str] = mapped_column(default='Pendente')
+
+    telefone: Mapped[str] = mapped_column(default=None)
 
     foto_perfil: Mapped[int | None] = mapped_column(
         ForeignKey('fotografias.id'), default=None

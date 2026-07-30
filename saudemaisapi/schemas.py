@@ -41,6 +41,10 @@ class Usuario_comum_retorno(Usuario_comum):
     model_config = ConfigDict(from_attributes=True)
     id: int
 
+class Usuario_comum_lista(Usuario_comum_retorno):
+    model_config = ConfigDict(from_attributes=True)
+    usuarios: list[Usuario_comum_retorno]
+
 
 class Usuario_administrador_retorno(Usuario_adiministrador):
     model_config = ConfigDict(from_attributes=True)
