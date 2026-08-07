@@ -8,10 +8,18 @@ from sqlalchemy.pool import StaticPool
 
 from saudemaisapi.app import app
 from saudemaisapi.database import get_db
-from saudemaisapi.models import (Evento, registrador_tabela, Sugestao,
-                                 Usuario_comum, Usuario_institucional,
-                                 Usuario_administrador, Comentario, Unidade_saude, Categoria)
-from saudemaisapi.schemas import Usuario
+from saudemaisapi.models import (
+    Categoria,
+    Comentario,
+    Evento,
+    Fotografias,
+    Sugestao,
+    Unidade_saude,
+    Usuario_administrador,
+    Usuario_comum,
+    Usuario_institucional,
+    registrador_tabela,
+)
 
 
 @pytest.fixture
@@ -47,12 +55,18 @@ def mock_db_time():
     time = datetime(2026, 7, 10, 10, 10)
 
     def fake_time_hook(mapper, connection, target):
-        if hasattr(target, 'data_criacao'):
-            target.data_criacao = time
+        if hasattr(target, 'data_hora_criacao'):
+            target.data_hora_criacao = time
         elif hasattr(target, 'data_hora_envio'):
             target.data_hora_envio = time
         elif hasattr(target, 'data_hora_feito'):
             target.data_hora_feito = time
+        elif hasattr(target, 'data_hora_evento'):
+            target.data_hora_evento = datetime(2026, 7, 24, 10, 10, 10)
+        elif hasattr(target, 'data_hora_fim'):
+            target.data_hora_fim = datetime(2026, 7, 30, 10, 10, 10)
+        elif hasattr(target, 'data_hora_envio'):
+            target.data_hora_envio = time
 
     event.listen(Evento, 'before_insert', fake_time_hook)
 
@@ -60,22 +74,24 @@ def mock_db_time():
 
     event.remove(Evento, 'before_insert', fake_time_hook)
 
+
 @pytest.fixture
 def usuario_comum(session):
     usuario = Usuario_comum(
         email='exemplo@gmail.com',
-        nome= 'exemplo',
+        nome='exemplo',
         senha='segredo',
         cpf='123456',
         data_nascimento=datetime(2026, 7, 10, 10, 10),
-        regiao_preferida= 'Urca',
-        telefone='123456'
+        regiao_preferida='Urca',
+        telefone='123456',
     )
     session.add(usuario)
     session.commit()
     session.refresh(usuario)
 
     return usuario
+
 
 @pytest.fixture
 def usuario_institucional(session):
@@ -86,8 +102,8 @@ def usuario_institucional(session):
         cnpj='123456',
         vinculo_institucao='Posto',
         descricao='Posto de saúde',
-        endereco= 'Pavuna',
-        telefone='123456'
+        endereco='Pavuna',
+        telefone='123456',
     )
 
     session.add(usuario)
@@ -95,6 +111,7 @@ def usuario_institucional(session):
     session.refresh(usuario)
 
     return usuario
+
 
 @pytest.fixture
 def usuario_administrador(session):
@@ -102,7 +119,7 @@ def usuario_administrador(session):
         email='institucional@gmail.com',
         nome='institutoExemplo',
         senha='segredo',
-        telefone='123456'
+        telefone='123456',
     )
 
     session.add(usuario)
@@ -111,13 +128,14 @@ def usuario_administrador(session):
 
     return usuario
 
+
 @pytest.fixture
 def sugestao(session):
     sugestao = Sugestao(
         titulo='Trocar o nome',
         conteudo='Seria bom trocar o nome',
         data_hora_envio=mock_db_time,
-        usuario = 1
+        usuario=1,
     )
 
     session.add(sugestao)
@@ -126,15 +144,16 @@ def sugestao(session):
 
     return sugestao
 
+
 @pytest.fixture
 def comentario(session):
     comentario = Comentario(
-        data_hora_feito = mock_db_time,
-        titulo = 'Evento top',
-        conteudo= 'Esse evento é muito bom!',
-        usuario= 1,
-        evento= 1,
-        nota = 5
+        data_hora_feito=mock_db_time,
+        titulo='Evento top',
+        conteudo='Esse evento é muito bom!',
+        usuario=1,
+        evento=1,
+        nota=5,
     )
 
     session.add(comentario)
@@ -143,16 +162,17 @@ def comentario(session):
 
     return comentario
 
+
 @pytest.fixture
 def unidade_saude(session):
     unidade_saude = Unidade_saude(
-        nome= 'Posto X',
-        endereco= 'Urca',
-        latitude= 1.5,
-        longitude= 1.6,
-        lotacao= 10,
-        tempo_medio_atendimento= 50,
-        especialidade= 'Coração'
+        nome='Posto X',
+        endereco='Urca',
+        latitude=1.5,
+        longitude=1.6,
+        lotacao=10,
+        tempo_medio_atendimento=50,
+        especialidade='Coração',
     )
 
     session.add(unidade_saude)
@@ -161,11 +181,11 @@ def unidade_saude(session):
 
     return unidade_saude
 
+
 @pytest.fixture
 def categoria(session):
     categoria = Categoria(
-        nome='Zumba',
-        descricao='Evendos da modalidade Zumba'
+        nome='Zumba', descricao='Evendos da modalidade Zumba'
     )
 
     session.add(categoria)
@@ -174,24 +194,54 @@ def categoria(session):
 
     return categoria
 
+
 @pytest.fixture
 def evento(session, mock_db_time):
     evento = Evento(
         titulo='Vem Zumbar',
         descricao='Evento de zumba para 60+',
-        data_hora_evneto= datetime(2026, 7, 24, 10, 10,10),
-        data_hora_fim= datetime(2026, 7, 30, 10, 10,10),
-        publico_alvo= 'Idosos',
-        categoria= 'Zumba',
-        criador_institucional= 1,
-        capacidade_maxima= 10,
-        unidade_associada= 1,
-        endereco = 'Jovelina',
-        pagina_evento= 'www.vemzumbar60.com',
-        data_hora_criacao=mock_db_time
+        data_hora_evento=mock_db_time,
+        data_hora_fim=mock_db_time,
+        publico_alvo='Idosos',
+        categoria=1,
+        foto_evento=1,
+        criador_institucional=1,
+        capacidade_maxima=10,
+        unidade_associada=1,
+        endereco='Jovelina',
+        pagina_evento='www.vemzumbar60.com',
     )
+    evento.data_hora_criacao = mock_db_time
     session.add(evento)
     session.commit()
     session.refresh(evento)
 
     return evento
+
+
+@pytest.fixture
+def fotografia_de_evento(session, mock_db_time):
+    fotografias = Fotografias(
+        nome='Foto Vem Zumbar', arquivo=b'arquivo_binario', foto_de_evento=True
+    )
+
+    fotografias.data_hora_envio = mock_db_time
+    session.add(fotografias)
+    session.commit()
+    session.refresh(fotografias)
+
+    return fotografias
+
+
+@pytest.fixture
+def fotografia_de_usuario(session, mock_db_time):
+    fotografias = Fotografias(
+        nome='Usuario', arquivo=b'arquivo_binario', foto_de_evento=False
+    )
+
+    fotografias.data_hora_envio = mock_db_time
+    session.add(fotografias)
+    session.commit()
+    session.refresh(fotografias)
+
+    return fotografias

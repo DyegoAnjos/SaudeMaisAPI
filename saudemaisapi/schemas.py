@@ -4,73 +4,76 @@ from pydantic import BaseModel, ConfigDict
 
 
 # Arquivo que gerencia o formato de entradas e retornos
-class Message(BaseModel):
+class MessageSchema(BaseModel):
     mensagem: str
 
 
-class Usuario(BaseModel):
+class UsuarioSchema(BaseModel):
     email: str
     nome: str
     senha: str
     # foto_perfil
 
 
-class Usuario_adiministrador(Usuario):
+class Usuario_adiministrador_Schema(UsuarioSchema):
     telefone: str
 
 
-class Usuario_comum(Usuario_adiministrador):
+class Usuario_comum_Schema(Usuario_adiministrador_Schema):
     cpf: str
     data_nascimento: datetime
     regiao_preferida: str
 
 
-class Usuario_institucional(Usuario):
+class Usuario_Schema_institucional_Schema(UsuarioSchema):
     cnpj: str
     vinculo_instituicao: str
     descricao: str
     endereco: str
 
 
-class Usuario_retorno(Usuario):
+class Usuario_retorno_Schema(UsuarioSchema):
     model_config = ConfigDict(from_attributes=True)
     id: int
 
 
-class Usuario_comum_retorno(Usuario_comum):
-    model_config = ConfigDict(from_attributes=True)
-    id: int
-
-class Usuario_comum_lista(Usuario_comum_retorno):
-    model_config = ConfigDict(from_attributes=True)
-    usuarios: list[Usuario_comum_retorno]
-
-
-class Usuario_administrador_retorno(Usuario_adiministrador):
+class Usuario_comum_retorno_Schema(Usuario_comum_Schema):
     model_config = ConfigDict(from_attributes=True)
     id: int
 
 
-class Usuario_institucional_retorno(Usuario_institucional):
+class Usuario_comum_lista_Schema(Usuario_comum_retorno_Schema):
+    model_config = ConfigDict(from_attributes=True)
+    usuarios: list[Usuario_comum_retorno_Schema]
+
+
+class Usuario_administrador_retorno_Schema(Usuario_adiministrador_Schema):
+    model_config = ConfigDict(from_attributes=True)
+    id: int
+
+
+class Usuario_institucional_retorno_Schema(
+    Usuario_Schema_institucional_Schema
+):
     model_config = ConfigDict(from_attributes=True)
     id: int
     status: str = 'Pendente'
 
 
-class Sugestao(BaseModel):
+class Sugestao_Schema(BaseModel):
     titulo: str
     conteudo: str
 
     usuario: int
 
 
-class Sugestao_retorno(Sugestao):
+class Sugestao_retorno_Schema(Sugestao_Schema):
     model_config = ConfigDict(from_attributes=True)
     id: int
     data_hora_envio: datetime
 
 
-class Comentario(BaseModel):
+class Comentario_Schema(BaseModel):
     nota: int
     titulo: str
     conteudo: str
@@ -79,7 +82,7 @@ class Comentario(BaseModel):
     evento: int
 
 
-class Comentario_retorno(Comentario):
+class Comentario_retorno_Schema(Comentario_Schema):
     model_config = ConfigDict(from_attributes=True)
     # Garante compatibilidade ORM
     id: int
@@ -87,17 +90,17 @@ class Comentario_retorno(Comentario):
     data_hora_feito: datetime
 
 
-class Inscricao(BaseModel):
+class Inscricao_Schema(BaseModel):
     usuario: int
     evento: int
 
 
-class Inscricao_retorno(Inscricao):
+class Inscricao_retorno_Schema(Inscricao_Schema):
     model_config = ConfigDict(from_attributes=True)
     id: int
 
 
-class Unidade_saude(BaseModel):
+class Unidade_saude_Schema(BaseModel):
     nome: str
     endereco: str
 
@@ -109,52 +112,58 @@ class Unidade_saude(BaseModel):
     especialidade: str
 
 
-class Unidade_saude_retorno(Unidade_saude):
+class Unidade_saude_retorno_Schema(Unidade_saude_Schema):
     model_config = ConfigDict(from_attributes=True)
     id: int
 
 
-class Categoria(BaseModel):
+class Categoria_Schema(BaseModel):
     nome: str
     descricao: str
 
 
-class Categoria_retorno(Categoria):
+class Categoria_retorno_Schema(Categoria_Schema):
     model_config = ConfigDict(from_attributes=True)
     id: int
 
 
-class Fotografias(BaseModel):
+class Fotografias_Schema(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
     nome: str
-    arquivo: str
+    arquivo: bytes
     foto_de_evento: bool
 
 
-class Fotografia_retorno(Fotografias):
+class Fotografia_retorno_Schema(Fotografias_Schema):
     model_config = ConfigDict(from_attributes=True)
     id: int
 
     data_hora_envio: datetime
 
 
-class Evento(BaseModel):
+class Fotografia_lista_Schema(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+    fotografias: list[Fotografia_retorno_Schema]
+
+
+class Evento_Schema(BaseModel):
     titulo: str
     descricao: str
     data_hora_evento: datetime
     data_hora_fim: datetime
     publico_alvo: str
 
-    categoria: Categoria
-    # foto_evento:
+    categoria: int
+    foto_evento: int
     criador_institucional: int
 
     capacidade_maxima: int | None = None
     unidade_associada: int | None = None
-    endereco: str | None
+    endereco: str | None = None
     pagina_evento: str | None = None
 
 
-class Evento_retorno(Evento):
+class Evento_retorno_Schema(Evento_Schema):
     model_config = ConfigDict(from_attributes=True)
 
     id: int
@@ -163,12 +172,17 @@ class Evento_retorno(Evento):
     status: str
 
     data_hora_criacao: datetime
-    data_cancelamento: datetime | None = None
-    data_ultima_atualizacao: datetime | None = None
+    data_hora_cancelamento: datetime | None = None
+    data_hora_ultima_atualizacao: datetime | None = None
 
-    comentarios: list[Comentario_retorno] = []
+    comentarios: list[Comentario_retorno_Schema] = []
 
 
-class EventosList(BaseModel):
+class Eventos_list_Schema(BaseModel):
     model_config = ConfigDict(from_attributes=True)
-    eventos: list[Evento_retorno]
+    eventos: list[Evento_retorno_Schema]
+
+
+class Filtro_Paginas(BaseModel):
+    limit: int = 10
+    offset: int = 0

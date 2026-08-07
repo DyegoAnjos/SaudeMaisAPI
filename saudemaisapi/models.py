@@ -20,7 +20,7 @@ class Usuario_comum:
     senha: Mapped[str]
     data_nascimento: Mapped[datetime]
 
-    telefone: Mapped[str] = mapped_column(default= None)
+    telefone: Mapped[str] = mapped_column(default=None)
 
     foto_perfil: Mapped[int | None] = mapped_column(
         ForeignKey('fotografias.id'), default=None
@@ -41,7 +41,7 @@ class Usuario_administrador:
     nome: Mapped[str]
     senha: Mapped[str]
 
-    telefone: Mapped[str] = mapped_column(default= None)
+    telefone: Mapped[str] = mapped_column(default=None)
 
     foto_perfil: Mapped[int | None] = mapped_column(
         ForeignKey('fotografias.id'), default=None
@@ -58,7 +58,6 @@ class Usuario_institucional:
     email: Mapped[str] = mapped_column(unique=True)
     nome: Mapped[str] = mapped_column(unique=True)
     cnpj: Mapped[str] = mapped_column(unique=True)
-
 
     senha: Mapped[str]
     vinculo_instituicao: Mapped[str]
@@ -205,7 +204,7 @@ class Evento:
         default=None
     )
 
-    data_ultima_atualizacao: Mapped[datetime | None] = mapped_column(
+    data_hora_ultima_atualizacao: Mapped[datetime | None] = mapped_column(
         DateTime, init=False, onupdate=func.now(), default=None
     )
     pagina_evento: Mapped[str | None] = mapped_column(default=None)
