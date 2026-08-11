@@ -126,4 +126,4 @@ def remover_fotografia(id_fotografia, session: SessionDep):
     session.delete(fotografia)
     session.commit()
 
-    return {'message': 'Fotografia removida com sucesso!'}
+    return {'mensagem': 'Fotografia removida com sucesso!'}

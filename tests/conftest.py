@@ -69,10 +69,12 @@ def mock_db_time():
             target.data_hora_envio = time
 
     event.listen(Evento, 'before_insert', fake_time_hook)
+    event.listen(Fotografias, 'before_insert', fake_time_hook)
 
     yield time
 
     event.remove(Evento, 'before_insert', fake_time_hook)
+    event.remove(Fotografias, 'before_insert', fake_time_hook)
 
 
 @pytest.fixture

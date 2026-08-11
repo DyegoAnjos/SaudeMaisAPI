@@ -70,7 +70,7 @@ def teste_listar_fotografia_not_found(client):
     assert resposta.json() == {'detail': 'Fotografia não encontrada'}
 
 
-def criar_fotografia_usuario(
+def test_criar_fotografia_usuario(
     client,
     fotografia_de_usuario,
     mock_db_time,
@@ -117,6 +117,7 @@ def teste_atualizar_fotografia_de_usuario(
         'data_hora_envio': mock_db_time.isoformat(),
     }
 
+
 def teste_atualizar_fotografia_de_evento(
     client,
     fotografia_de_evento,
@@ -136,20 +137,27 @@ def teste_atualizar_fotografia_de_evento(
         'id': 1,
         'nome': 'Evento atualizado',
         'arquivo': 'arquivo_binario',
-        'foto_de_evento': True,
+        'foto_de_evento': False,
         'data_hora_envio': mock_db_time.isoformat(),
     }
 
-def atualizar_fotografia_not_found(
-        client,
-        fotografia_de_evento,
-):
+
+def test_atualizar_fotografia_not_found(client):
     resposta = client.put(
         '/fotografias/atualizar_fotografia/-1',
+        json={
+            'nome': 'Fotografia inexistente',
+            'arquivo': 'arquivo_binario',
+            'foto_de_evento': False,
+        },
     )
 
     assert resposta.status_code == HTTPStatus.NOT_FOUND
-    assert resposta.json() == {
-        'detail': 'Fotografia não encontrada'
-    }
+    assert resposta.json() == {'detail': 'Fotografia não encontrada'}
 
+
+def test_remover_fotografia(client, fotografia_de_usuario):
+    resposta = client.delete('/fotografias/remover_fotografia/1')
+
+    assert resposta.status_code == HTTPStatus.OK
+    assert resposta.json() == {'mensagem': 'Fotografia removida com sucesso!'}
