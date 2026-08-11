@@ -1,6 +1,6 @@
 from datetime import datetime
 
-from sqlalchemy import DateTime, ForeignKey, LargeBinary, func
+from sqlalchemy import DateTime, ForeignKey, func
 from sqlalchemy.orm import Mapped, mapped_as_dataclass, mapped_column, registry
 
 registrador_tabela = registry()
@@ -164,7 +164,9 @@ class Fotografias:
     )
 
     nome: Mapped[str]
-    arquivo: Mapped[bytes] = mapped_column(LargeBinary)
+    caminho: Mapped[str] = mapped_column(unique=True)
+    tipo: Mapped[str]
+    tamanho: Mapped[int]
 
     foto_de_evento: Mapped[bool] = mapped_column(default=False)
 

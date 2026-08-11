@@ -138,7 +138,8 @@ class Categorias_lista_Schema(BaseModel):
 class Fotografias_Schema(BaseModel):
     model_config = ConfigDict(from_attributes=True)
     nome: str
-    arquivo: bytes
+    tipo: str
+    tamanho: int
     foto_de_evento: bool
 
 

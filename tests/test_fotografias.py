@@ -1,163 +1,121 @@
 from http import HTTPStatus
+from pathlib import Path
 
-from saudemaisapi.schemas import Fotografia_retorno_Schema
+TAMANHO_FOTO_USUARIO = len(b'foto_usuario')
 
 
-def teste_listar_fotografias(
-    client,
-    mock_db_time,
-    fotografia_de_usuario,
-    fotografia_de_evento,
-):
-    fotografias_schema = []
-    for foto in (fotografia_de_usuario, fotografia_de_evento):
-        dados = Fotografia_retorno_Schema.model_validate(foto).model_dump(
-            mode='json'
-        )
-        fotografias_schema.append(dados)
-
+def test_listar_fotografias(client, fotografia_de_usuario):
     resposta = client.get('/fotografias/')
 
     assert resposta.status_code == HTTPStatus.OK
-    assert resposta.json() == {'fotografias': fotografias_schema}
+    assert resposta.json()['fotografias'][0]['nome'] == 'usuario.png'
+    assert resposta.json()['fotografias'][0]['tipo'] == 'image/png'
+    assert resposta.json()['fotografias'][0]['tamanho'] == TAMANHO_FOTO_USUARIO
 
 
-def teste_listar_fotografias_null(client):
+def test_listar_fotografias_vazio(client):
     resposta = client.get('/fotografias/')
-
     assert resposta.status_code == HTTPStatus.OK
     assert resposta.json() == {'fotografias': []}
 
 
-def teste_listar_fotografia_de_usuario_por_id(
-    client,
-    mock_db_time,
-    fotografia_de_usuario,
-):
-    resposta = client.get('/fotografias/1/')
+def test_buscar_fotografia(client, fotografia_de_evento):
+    resposta = client.get('/fotografias/1')
 
     assert resposta.status_code == HTTPStatus.OK
-    assert resposta.json() == {
-        'id': 1,
-        'nome': 'Usuario',
-        'arquivo': 'arquivo_binario',
-        'foto_de_evento': False,
-        'data_hora_envio': mock_db_time.isoformat(),
-    }
+    assert resposta.json()['nome'] == 'evento.jpg'
+    assert resposta.json()['foto_de_evento'] is True
 
 
-def teste_listar_fotografia_de_evento_por_id(
-    client,
-    mock_db_time,
-    fotografia_de_evento,
-):
-    resposta = client.get('/fotografias/1/')
-
-    assert resposta.status_code == HTTPStatus.OK
-    assert resposta.json() == {
-        'id': 1,
-        'nome': 'Foto Vem Zumbar',
-        'arquivo': 'arquivo_binario',
-        'foto_de_evento': True,
-        'data_hora_envio': mock_db_time.isoformat(),
-    }
-
-
-def teste_listar_fotografia_not_found(client):
-    resposta = client.get('/fotografias/-1')
-
+def test_fotografia_nao_encontrada(client):
+    resposta = client.get('/fotografias/999')
     assert resposta.status_code == HTTPStatus.NOT_FOUND
-    assert resposta.json() == {'detail': 'Fotografia não encontrada'}
 
 
-def test_criar_fotografia_usuario(
-    client,
-    fotografia_de_usuario,
-    mock_db_time,
-):
+def test_criar_fotografia(client, mock_db_time):
     resposta = client.post(
         '/fotografias/criar_fotografia',
-        json={
-            'nome': 'Usuario novo',
-            'arquivo': 'arquivo_binario',
-            'foto_de_evento': False,
-        },
+        files={'arquivo': ('perfil.png', b'conteudo_png', 'image/png')},
+        data={'foto_de_evento': 'false'},
     )
 
     assert resposta.status_code == HTTPStatus.CREATED
     assert resposta.json() == {
-        'id': 2,
-        'nome': 'Usuario novo',
-        'arquivo': 'arquivo_binario',
+        'id': 1,
+        'nome': 'perfil.png',
+        'tipo': 'image/png',
+        'tamanho': 12,
         'foto_de_evento': False,
         'data_hora_envio': mock_db_time.isoformat(),
     }
 
 
-def teste_atualizar_fotografia_de_usuario(
-    client,
-    fotografia_de_usuario,
-    mock_db_time,
-):
+def test_criar_fotografia_com_formato_invalido(client):
+    resposta = client.post(
+        '/fotografias/criar_fotografia',
+        files={'arquivo': ('texto.txt', b'conteudo', 'text/plain')},
+    )
+    assert resposta.status_code == HTTPStatus.UNSUPPORTED_MEDIA_TYPE
+    assert resposta.json() == {'detail': 'Formato de imagem não permitido'}
+
+
+def test_criar_fotografia_vazia(client):
+    resposta = client.post(
+        '/fotografias/criar_fotografia',
+        files={'arquivo': ('vazia.png', b'', 'image/png')},
+    )
+    assert resposta.status_code == HTTPStatus.BAD_REQUEST
+
+
+def test_criar_fotografia_grande_demais(client):
+    resposta = client.post(
+        '/fotografias/criar_fotografia',
+        files={
+            'arquivo': (
+                'grande.jpg',
+                b'x' * (5 * 1024 * 1024 + 1),
+                'image/jpeg',
+            )
+        },
+    )
+    assert resposta.status_code == HTTPStatus.REQUEST_ENTITY_TOO_LARGE
+
+
+def test_obter_arquivo(client, fotografia_de_usuario):
+    resposta = client.get('/fotografias/1/arquivo')
+
+    assert resposta.status_code == HTTPStatus.OK
+    assert resposta.content == b'foto_usuario'
+    assert resposta.headers['content-type'] == 'image/png'
+
+
+def test_atualizar_fotografia(client, fotografia_de_usuario):
+    caminho_antigo = Path(fotografia_de_usuario.caminho)
     resposta = client.put(
         '/fotografias/atualizar_fotografia/1',
-        json={
-            'nome': 'Usuario atualizado',
-            'arquivo': 'arquivo_binario',
-            'foto_de_evento': False,
-        },
+        files={'arquivo': ('nova.webp', b'nova_foto', 'image/webp')},
+        data={'foto_de_evento': 'true'},
     )
 
     assert resposta.status_code == HTTPStatus.OK
-    assert resposta.json() == {
-        'id': 1,
-        'nome': 'Usuario atualizado',
-        'arquivo': 'arquivo_binario',
-        'foto_de_evento': False,
-        'data_hora_envio': mock_db_time.isoformat(),
-    }
+    assert resposta.json()['nome'] == 'nova.webp'
+    assert resposta.json()['tipo'] == 'image/webp'
+    assert resposta.json()['foto_de_evento'] is True
+    assert not caminho_antigo.exists()
 
 
-def teste_atualizar_fotografia_de_evento(
-    client,
-    fotografia_de_evento,
-    mock_db_time,
-):
+def test_atualizar_fotografia_inexistente(client):
     resposta = client.put(
-        '/fotografias/atualizar_fotografia/1',
-        json={
-            'nome': 'Evento atualizado',
-            'arquivo': 'arquivo_binario',
-            'foto_de_evento': False,
-        },
+        '/fotografias/atualizar_fotografia/999',
+        files={'arquivo': ('nova.png', b'nova', 'image/png')},
     )
-
-    assert resposta.status_code == HTTPStatus.OK
-    assert resposta.json() == {
-        'id': 1,
-        'nome': 'Evento atualizado',
-        'arquivo': 'arquivo_binario',
-        'foto_de_evento': False,
-        'data_hora_envio': mock_db_time.isoformat(),
-    }
-
-
-def test_atualizar_fotografia_not_found(client):
-    resposta = client.put(
-        '/fotografias/atualizar_fotografia/-1',
-        json={
-            'nome': 'Fotografia inexistente',
-            'arquivo': 'arquivo_binario',
-            'foto_de_evento': False,
-        },
-    )
-
     assert resposta.status_code == HTTPStatus.NOT_FOUND
-    assert resposta.json() == {'detail': 'Fotografia não encontrada'}
 
 
 def test_remover_fotografia(client, fotografia_de_usuario):
+    caminho = Path(fotografia_de_usuario.caminho)
     resposta = client.delete('/fotografias/remover_fotografia/1')
 
     assert resposta.status_code == HTTPStatus.OK
     assert resposta.json() == {'mensagem': 'Fotografia removida com sucesso!'}
+    assert not caminho.exists()

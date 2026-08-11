@@ -20,6 +20,7 @@ from saudemaisapi.models import (
     Usuario_institucional,
     registrador_tabela,
 )
+from saudemaisapi.routers import fotografias as fotografias_router
 
 
 @pytest.fixture
@@ -48,6 +49,12 @@ def session():
 
     registrador_tabela.metadata.drop_all(engine)
     engine.dispose()
+
+
+@pytest.fixture(autouse=True)
+def pasta_de_upload_temporaria(tmp_path, monkeypatch):
+    monkeypatch.setattr(fotografias_router, 'PASTA_UPLOADS', tmp_path)
+    return tmp_path
 
 
 @pytest.fixture
@@ -222,9 +229,15 @@ def evento(session, mock_db_time):
 
 
 @pytest.fixture
-def fotografia_de_evento(session, mock_db_time):
+def fotografia_de_evento(session, mock_db_time, pasta_de_upload_temporaria):
+    caminho = pasta_de_upload_temporaria / 'evento.jpg'
+    caminho.write_bytes(b'foto_evento')
     fotografias = Fotografias(
-        nome='Foto Vem Zumbar', arquivo=b'arquivo_binario', foto_de_evento=True
+        nome='evento.jpg',
+        caminho=str(caminho),
+        tipo='image/jpeg',
+        tamanho=11,
+        foto_de_evento=True,
     )
 
     fotografias.data_hora_envio = mock_db_time
@@ -236,9 +249,15 @@ def fotografia_de_evento(session, mock_db_time):
 
 
 @pytest.fixture
-def fotografia_de_usuario(session, mock_db_time):
+def fotografia_de_usuario(session, mock_db_time, pasta_de_upload_temporaria):
+    caminho = pasta_de_upload_temporaria / 'usuario.png'
+    caminho.write_bytes(b'foto_usuario')
     fotografias = Fotografias(
-        nome='Usuario', arquivo=b'arquivo_binario', foto_de_evento=False
+        nome='usuario.png',
+        caminho=str(caminho),
+        tipo='image/png',
+        tamanho=12,
+        foto_de_evento=False,
     )
 
     fotografias.data_hora_envio = mock_db_time

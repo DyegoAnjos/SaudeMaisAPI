@@ -107,6 +107,19 @@ As duas funcionalidades oferecem as operacoes completas de cadastro:
 - Coordenadas: latitude entre -90 e 90 e longitude entre -180 e 180.
 - Lotacao e tempo medio de atendimento: nao podem ser negativos.
 
+## Fotografias
+
+As fotografias sao enviadas como `multipart/form-data`. A API aceita imagens
+JPEG, PNG e WebP com tamanho maximo de 5 MB. O arquivo e salvo na pasta
+`uploads/` com um nome unico, enquanto o banco guarda o caminho, o nome
+original, o tipo e o tamanho.
+
+- `POST /fotografias/criar_fotografia`: enviar uma imagem.
+- `GET /fotografias/{id}`: consultar os metadados.
+- `GET /fotografias/{id}/arquivo`: baixar ou exibir a imagem.
+- `PUT /fotografias/atualizar_fotografia/{id}`: trocar a imagem.
+- `DELETE /fotografias/remover_fotografia/{id}`: remover a imagem.
+
 ## Observacao de seguranca
 
 O arquivo `.env` pode conter dados privados e nao deve ser enviado ao GitHub.
