@@ -1,9 +1,10 @@
 from datetime import datetime
 
 import pytest
+import pytest_asyncio
 from fastapi.testclient import TestClient
-from sqlalchemy import create_engine, event
-from sqlalchemy.orm import Session
+from sqlalchemy import event
+from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
 from sqlalchemy.pool import StaticPool
 
 from saudemaisapi.app import app
@@ -34,20 +35,21 @@ def client(session):
     app.dependency_overrides.clear()
 
 
-@pytest.fixture
-def session():
-    engine = create_engine(
-        'sqlite:///:memory:',
+@pytest_asyncio.fixture
+async def session():
+    engine = create_async_engine(
+        'sqlite+aiosqlite:///:memory:',
         connect_args={'check_same_thread': False},
         poolclass=StaticPool,
     )
-    registrador_tabela.metadata.create_all(engine)
+    async with engine.begin() as conn:
+        await conn.run_sync(registrador_tabela.metadata.create_all)
 
-    with Session(engine) as session:
+    async with AsyncSession(engine, expire_on_commit=False) as session:
         yield session
 
-    registrador_tabela.metadata.drop_all(engine)
-    engine.dispose()
+    async with engine.begin() as conn:
+        await conn.run_sync(registrador_tabela.metadata.drop_all)
 
 
 @pytest.fixture
@@ -195,8 +197,8 @@ def categoria(session):
     return categoria
 
 
-@pytest.fixture
-def evento(session, mock_db_time):
+@pytest_asyncio.fixture
+async def evento(session: AsyncSession, mock_db_time):
     evento = Evento(
         titulo='Vem Zumbar',
         descricao='Evento de zumba para 60+',
@@ -213,8 +215,8 @@ def evento(session, mock_db_time):
     )
     evento.data_hora_criacao = mock_db_time
     session.add(evento)
-    session.commit()
-    session.refresh(evento)
+    await session.commit()
+    await session.refresh(evento)
 
     return evento
 

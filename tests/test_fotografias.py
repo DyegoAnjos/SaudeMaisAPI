@@ -117,6 +117,7 @@ def teste_atualizar_fotografia_de_usuario(
         'data_hora_envio': mock_db_time.isoformat(),
     }
 
+
 def teste_atualizar_fotografia_de_evento(
     client,
     fotografia_de_evento,
@@ -140,16 +141,14 @@ def teste_atualizar_fotografia_de_evento(
         'data_hora_envio': mock_db_time.isoformat(),
     }
 
+
 def atualizar_fotografia_not_found(
-        client,
-        fotografia_de_evento,
+    client,
+    fotografia_de_evento,
 ):
     resposta = client.put(
         '/fotografias/atualizar_fotografia/-1',
     )
 
     assert resposta.status_code == HTTPStatus.NOT_FOUND
-    assert resposta.json() == {
-        'detail': 'Fotografia não encontrada'
-    }
-
+    assert resposta.json() == {'detail': 'Fotografia não encontrada'}

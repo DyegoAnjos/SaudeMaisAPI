@@ -4,7 +4,7 @@ from typing import Annotated
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError
-from sqlalchemy.orm import Session
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from saudemaisapi.database import get_db
 from saudemaisapi.models import Evento
@@ -18,16 +18,16 @@ from saudemaisapi.schemas import (
 
 router = APIRouter(prefix='/eventos', tags=['Eventos'])
 
-Session = Annotated[Session, Depends(get_db)]
+Session = Annotated[AsyncSession, Depends(get_db)]
 
 # GET
 
 
 @router.get('/', status_code=HTTPStatus.OK, response_model=Eventos_list_Schema)
-def listar_eventos(
+async def listar_eventos(
     session: Session, filtro: Annotated[Filtro_Paginas, Query()]
 ):
-    eventos = session.scalars(
+    eventos = await session.scalars(
         select(Evento).limit(filtro.limit).offset(filtro.offset)
     )
 
@@ -39,9 +39,11 @@ def listar_eventos(
     status_code=HTTPStatus.OK,
     response_model=Evento_retorno_Schema,
 )
-def listar_eventos_por_id(id_evento: int, session: Session):
+async def listar_eventos_por_id(id_evento: int, session: Session):
 
-    eventos = session.scalar(select(Evento).where(Evento.id == id_evento))
+    eventos = await session.scalar(
+        select(Evento).where(Evento.id == id_evento)
+    )
 
     if not eventos:
         raise HTTPException(
@@ -57,8 +59,8 @@ def listar_eventos_por_id(id_evento: int, session: Session):
     status_code=HTTPStatus.CREATED,
     response_model=Evento_retorno_Schema,
 )
-def criar_eventos(evento: Evento_Schema, session: Session):
-    evento_bd = session.scalar(
+async def criar_eventos(evento: Evento_Schema, session: Session):
+    evento_bd = await session.scalar(
         select(Evento).where(Evento.titulo == evento.titulo)
     )
 
@@ -71,9 +73,9 @@ def criar_eventos(evento: Evento_Schema, session: Session):
     evento_bd = Evento(**evento.model_dump())
 
     session.add(evento_bd)
-    session.commit()
+    await session.commit()
 
-    session.refresh(evento_bd)
+    await session.refresh(evento_bd)
 
     return evento_bd
 
@@ -84,8 +86,12 @@ def criar_eventos(evento: Evento_Schema, session: Session):
     status_code=HTTPStatus.OK,
     response_model=Evento_retorno_Schema,
 )
-def atualizar_evento(evento: Evento_Schema, id_evento: int, session: Session):
-    evento_bd = session.scalar(select(Evento).where(Evento.id == id_evento))
+async def atualizar_evento(
+    evento: Evento_Schema, id_evento: int, session: Session
+):
+    evento_bd = await session.scalar(
+        select(Evento).where(Evento.id == id_evento)
+    )
     if not evento_bd:
         raise HTTPException(
             status_code=HTTPStatus.NOT_FOUND, detail='Evento não encontrado'
@@ -95,8 +101,8 @@ def atualizar_evento(evento: Evento_Schema, id_evento: int, session: Session):
         for chave, valor in evento.model_dump(exclude_unset=True).items():
             setattr(evento_bd, chave, valor)
 
-        session.commit()
-        session.refresh(evento_bd)
+        await session.commit()
+        await session.refresh(evento_bd)
 
         return evento_bd
     except IntegrityError:
@@ -112,13 +118,15 @@ def atualizar_evento(evento: Evento_Schema, id_evento: int, session: Session):
     status_code=HTTPStatus.OK,
     response_model=MessageSchema,
 )
-def remover_evento(id_evento: int, session: Session):
-    evento_bd = session.scalar(select(Evento).where(Evento.id == id_evento))
+async def remover_evento(id_evento: int, session: Session):
+    evento_bd = await session.scalar(
+        select(Evento).where(Evento.id == id_evento)
+    )
     if not evento_bd:
         raise HTTPException(
             status_code=HTTPStatus.NOT_FOUND, detail='Evento não encontrado'
         )
-    session.delete(evento_bd)
-    session.commit()
+    await session.delete(evento_bd)
+    await session.commit()
 
     return {'mensagem': 'Evento removido com sucesso!'}

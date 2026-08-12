@@ -56,3 +56,6 @@ run = 'fastapi dev saudemaisapi/app.py'
 pre_test = 'task format'
 test = 'pytest -s -x --cov=saudemaisapi -vv'
 post_test = 'coverage html --show-contexts'
+
+[tool.coverage.run]
+concurrency = ["thread", "greenlet"]
