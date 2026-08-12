@@ -128,7 +128,7 @@ def teste_atualizar_fotografia_de_evento(
         json={
             'nome': 'Evento atualizado',
             'arquivo': 'arquivo_binario',
-            'foto_de_evento': False,
+            'foto_de_evento': True,
         },
     )
 
