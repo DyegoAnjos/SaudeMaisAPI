@@ -21,6 +21,7 @@ from saudemaisapi.models import (
     Usuario_institucional,
     registrador_tabela,
 )
+from saudemaisapi.routers import fotografias as fotografias_router
 
 
 @pytest.fixture
@@ -52,6 +53,12 @@ async def session():
         await conn.run_sync(registrador_tabela.metadata.drop_all)
 
 
+@pytest.fixture(autouse=True)
+def pasta_de_upload_temporaria(tmp_path, monkeypatch):
+    monkeypatch.setattr(fotografias_router, 'PASTA_UPLOADS', tmp_path)
+    return tmp_path
+
+
 @pytest.fixture
 def mock_db_time():
     time = datetime(2026, 7, 10, 10, 10)
@@ -71,10 +78,12 @@ def mock_db_time():
             target.data_hora_envio = time
 
     event.listen(Evento, 'before_insert', fake_time_hook)
+    event.listen(Fotografias, 'before_insert', fake_time_hook)
 
     yield time
 
     event.remove(Evento, 'before_insert', fake_time_hook)
+    event.remove(Fotografias, 'before_insert', fake_time_hook)
 
 
 @pytest.fixture
@@ -222,9 +231,15 @@ async def evento(session: AsyncSession, mock_db_time):
 
 
 @pytest.fixture
-def fotografia_de_evento(session, mock_db_time):
+def fotografia_de_evento(session, mock_db_time, pasta_de_upload_temporaria):
+    caminho = pasta_de_upload_temporaria / 'evento.jpg'
+    caminho.write_bytes(b'foto_evento')
     fotografias = Fotografias(
-        nome='Foto Vem Zumbar', arquivo=b'arquivo_binario', foto_de_evento=True
+        nome='evento.jpg',
+        caminho=str(caminho),
+        tipo='image/jpeg',
+        tamanho=11,
+        foto_de_evento=True,
     )
 
     fotografias.data_hora_envio = mock_db_time
@@ -236,9 +251,15 @@ def fotografia_de_evento(session, mock_db_time):
 
 
 @pytest.fixture
-def fotografia_de_usuario(session, mock_db_time):
+def fotografia_de_usuario(session, mock_db_time, pasta_de_upload_temporaria):
+    caminho = pasta_de_upload_temporaria / 'usuario.png'
+    caminho.write_bytes(b'foto_usuario')
     fotografias = Fotografias(
-        nome='Usuario', arquivo=b'arquivo_binario', foto_de_evento=False
+        nome='usuario.png',
+        caminho=str(caminho),
+        tipo='image/png',
+        tamanho=12,
+        foto_de_evento=False,
     )
 
     fotografias.data_hora_envio = mock_db_time

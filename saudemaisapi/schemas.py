@@ -1,6 +1,6 @@
 from datetime import datetime
 
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 
 # Arquivo que gerencia o formato de entradas e retornos
@@ -74,9 +74,9 @@ class Sugestao_retorno_Schema(Sugestao_Schema):
 
 
 class Comentario_Schema(BaseModel):
-    nota: int
-    titulo: str
-    conteudo: str
+    nota: int = Field(ge=0, le=5)
+    titulo: str = Field(min_length=1)
+    conteudo: str = Field(min_length=1)
 
     usuario: int
     evento: int
@@ -101,15 +101,15 @@ class Inscricao_retorno_Schema(Inscricao_Schema):
 
 
 class Unidade_saude_Schema(BaseModel):
-    nome: str
-    endereco: str
+    nome: str = Field(min_length=1)
+    endereco: str = Field(min_length=1)
 
-    latitude: float
-    longitude: float
-    lotacao: int
+    latitude: float = Field(ge=-90, le=90)
+    longitude: float = Field(ge=-180, le=180)
+    lotacao: int = Field(ge=0)
 
-    tempo_medio_atendimento: int
-    especialidade: str
+    tempo_medio_atendimento: int | None = Field(default=None, ge=0)
+    especialidade: str | None = None
 
 
 class Unidade_saude_retorno_Schema(Unidade_saude_Schema):
@@ -117,9 +117,13 @@ class Unidade_saude_retorno_Schema(Unidade_saude_Schema):
     id: int
 
 
+class Unidades_saude_lista_Schema(BaseModel):
+    unidades: list[Unidade_saude_retorno_Schema]
+
+
 class Categoria_Schema(BaseModel):
-    nome: str
-    descricao: str
+    nome: str = Field(min_length=1)
+    descricao: str = Field(min_length=1)
 
 
 class Categoria_retorno_Schema(Categoria_Schema):
@@ -127,10 +131,15 @@ class Categoria_retorno_Schema(Categoria_Schema):
     id: int
 
 
+class Categorias_lista_Schema(BaseModel):
+    categorias: list[Categoria_retorno_Schema]
+
+
 class Fotografias_Schema(BaseModel):
     model_config = ConfigDict(from_attributes=True)
     nome: str
-    arquivo: bytes
+    tipo: str
+    tamanho: int
     foto_de_evento: bool
 
 
@@ -147,20 +156,28 @@ class Fotografia_lista_Schema(BaseModel):
 
 
 class Evento_Schema(BaseModel):
-    titulo: str
-    descricao: str
+    titulo: str = Field(min_length=1)
+    descricao: str = Field(min_length=1)
     data_hora_evento: datetime
     data_hora_fim: datetime
-    publico_alvo: str
+    publico_alvo: str = Field(min_length=1)
 
     categoria: int
     foto_evento: int
     criador_institucional: int
 
-    capacidade_maxima: int | None = None
+    capacidade_maxima: int | None = Field(default=None, gt=0)
     unidade_associada: int | None = None
     endereco: str | None = None
     pagina_evento: str | None = None
+
+    @model_validator(mode='after')
+    def validar_datas(self):
+        if self.data_hora_fim < self.data_hora_evento:
+            raise ValueError(
+                'A data final não pode ser anterior à data inicial'
+            )
+        return self
 
 
 class Evento_retorno_Schema(Evento_Schema):
@@ -175,7 +192,7 @@ class Evento_retorno_Schema(Evento_Schema):
     data_hora_cancelamento: datetime | None = None
     data_hora_ultima_atualizacao: datetime | None = None
 
-    comentarios: list[Comentario_retorno_Schema] = []
+    comentarios: list[Comentario_retorno_Schema] = Field(default_factory=list)
 
 
 class Eventos_list_Schema(BaseModel):
@@ -184,5 +201,5 @@ class Eventos_list_Schema(BaseModel):
 
 
 class Filtro_Paginas(BaseModel):
-    limit: int = 10
-    offset: int = 0
+    limit: int = Field(default=10, ge=1, le=100)
+    offset: int = Field(default=0, ge=0)

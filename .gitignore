@@ -18,6 +18,10 @@ ENV/
 *.db
 *.sqlite3
 
+# Fotografias enviadas localmente
+uploads/*
+!uploads/.gitkeep
+
 # Pastas do sistema ou IDEs
 .vscode/
 .idea/
