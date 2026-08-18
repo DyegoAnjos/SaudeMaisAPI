@@ -12,7 +12,7 @@ def test_cors_permite_front_local(client):
     resposta = client.options(
         '/',
         headers={
-            'Origin': 'http://localhost:5173',
+            'Origin': 'http://127.0.0.1:5500',
             'Access-Control-Request-Method': 'GET',
         },
     )
@@ -20,5 +20,5 @@ def test_cors_permite_front_local(client):
     assert resposta.status_code == HTTPStatus.OK
     assert (
         resposta.headers['access-control-allow-origin']
-        == 'http://localhost:5173'
+        == 'http://127.0.0.1:5500'
     )
