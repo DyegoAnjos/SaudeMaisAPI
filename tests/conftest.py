@@ -87,7 +87,7 @@ def mock_db_time():
 
 
 @pytest_asyncio.fixture
-async def usuario_comum(session: AsyncSessionp):
+async def usuario_comum(session: AsyncSession):
     usuario = Usuario_comum(
         email='exemplo@gmail.com',
         nome='exemplo',

@@ -21,19 +21,19 @@ SessionDep = Annotated[Session, Depends(get_db)]
 
 
 @router.get('/', response_model=Categorias_lista_Schema)
-def listar_categorias(
+async def listar_categorias(
     session: SessionDep,
     filtro: Annotated[Filtro_Paginas, Query()],
 ):
-    categorias = session.scalars(
+    categorias = await session.scalars(
         select(Categoria).limit(filtro.limit).offset(filtro.offset)
-    ).all()
+    )
     return {'categorias': categorias}
 
 
 @router.get('/{id_categoria}', response_model=Categoria_retorno_Schema)
-def buscar_categoria(id_categoria: int, session: SessionDep):
-    categoria = session.get(Categoria, id_categoria)
+async def buscar_categoria(id_categoria: int, session: SessionDep):
+    categoria = await session.get(Categoria, id_categoria)
     if not categoria:
         raise HTTPException(
             status_code=HTTPStatus.NOT_FOUND,
@@ -47,28 +47,28 @@ def buscar_categoria(id_categoria: int, session: SessionDep):
     status_code=HTTPStatus.CREATED,
     response_model=Categoria_retorno_Schema,
 )
-def criar_categoria(dados: Categoria_Schema, session: SessionDep):
+async def criar_categoria(dados: Categoria_Schema, session: SessionDep):
     categoria = Categoria(**dados.model_dump())
     session.add(categoria)
     try:
-        session.commit()
+        await session.commit()
     except IntegrityError:
         session.rollback()
         raise HTTPException(
             status_code=HTTPStatus.CONFLICT,
             detail='Categoria já existe',
         )
-    session.refresh(categoria)
+    await session.refresh(categoria)
     return categoria
 
 
 @router.put('/{id_categoria}', response_model=Categoria_retorno_Schema)
-def atualizar_categoria(
+async def atualizar_categoria(
     id_categoria: int,
     dados: Categoria_Schema,
     session: SessionDep,
 ):
-    categoria = session.get(Categoria, id_categoria)
+    categoria = await session.get(Categoria, id_categoria)
     if not categoria:
         raise HTTPException(
             status_code=HTTPStatus.NOT_FOUND,
@@ -77,28 +77,28 @@ def atualizar_categoria(
     for campo, valor in dados.model_dump().items():
         setattr(categoria, campo, valor)
     try:
-        session.commit()
+        await session.commit()
     except IntegrityError:
         session.rollback()
         raise HTTPException(
             status_code=HTTPStatus.CONFLICT,
             detail='Categoria já existe',
         )
-    session.refresh(categoria)
+    await session.refresh(categoria)
     return categoria
 
 
 @router.delete('/{id_categoria}', response_model=MessageSchema)
-def remover_categoria(id_categoria: int, session: SessionDep):
-    categoria = session.get(Categoria, id_categoria)
+async def remover_categoria(id_categoria: int, session: SessionDep):
+    categoria = await session.get(Categoria, id_categoria)
     if not categoria:
         raise HTTPException(
             status_code=HTTPStatus.NOT_FOUND,
             detail='Categoria não encontrada',
         )
-    session.delete(categoria)
+    await session.delete(categoria)
     try:
-        session.commit()
+        await session.commit()
     except IntegrityError:
         session.rollback()
         raise HTTPException(
