@@ -86,8 +86,8 @@ def mock_db_time():
     event.remove(Fotografias, 'before_insert', fake_time_hook)
 
 
-@pytest.fixture
-def usuario_comum(session):
+@pytest_asyncio.fixture
+async def usuario_comum(session: AsyncSessionp):
     usuario = Usuario_comum(
         email='exemplo@gmail.com',
         nome='exemplo',
@@ -98,8 +98,8 @@ def usuario_comum(session):
         telefone='123456',
     )
     session.add(usuario)
-    session.commit()
-    session.refresh(usuario)
+    await session.commit()
+    await session.refresh(usuario)
 
     return usuario
 
