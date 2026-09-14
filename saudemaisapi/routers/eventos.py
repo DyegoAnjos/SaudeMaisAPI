@@ -1,37 +1,58 @@
 from http import HTTPStatus
 from typing import Annotated
 
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import APIRouter, Depends, HTTPException, Query, Request
 from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError
-from sqlalchemy.orm import Session
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from saudemaisapi.database import get_db
-from saudemaisapi.models import Evento
+from saudemaisapi.models import Categoria, Evento
 from saudemaisapi.schemas import (
     Evento_retorno_Schema,
     Evento_Schema,
-    Eventos_list_Schema,
     Filtro_Paginas,
     MessageSchema,
 )
 
 router = APIRouter(prefix='/eventos', tags=['Eventos'])
 
-Session = Annotated[Session, Depends(get_db)]
+Session = Annotated[AsyncSession, Depends(get_db)]
 
 # GET
 
 
-@router.get('/', status_code=HTTPStatus.OK, response_model=Eventos_list_Schema)
-def listar_eventos(
-    session: Session, filtro: Annotated[Filtro_Paginas, Query()]
-):
-    eventos = session.scalars(
-        select(Evento).limit(filtro.limit).offset(filtro.offset)
+async def preparar_evento(evento: Evento, session: Session, request: Request):
+    dados = Evento_retorno_Schema.model_validate(evento).model_dump()
+    categoria = await session.get(Categoria, evento.categoria)
+    dados['foto_capa'] = str(
+        request.url_for('obter_arquivo', id_fotografia=evento.foto_evento)
     )
+    dados['data'] = evento.data_hora_evento.date().isoformat()
+    dados['data_exibicao'] = evento.data_hora_evento.strftime('%d/%m/%Y')
+    dados['localizacao'] = evento.endereco
+    dados['numero_participantes'] = dados['inscricoes_atuais']
+    dados['categoria_nome'] = categoria.nome if categoria else None
+    return dados
 
-    return {'eventos': eventos}
+
+@router.get(
+    '/', status_code=HTTPStatus.OK, response_model=list[Evento_retorno_Schema]
+)
+async def listar_eventos(
+    request: Request,
+    session: Session,
+    filtro: Annotated[Filtro_Paginas, Query()],
+):
+    eventos = (
+        await session.scalars(
+            select(Evento).limit(filtro.limit).offset(filtro.offset)
+        )
+    ).all()
+
+    return [
+        await preparar_evento(evento, session, request) for evento in eventos
+    ]
 
 
 @router.get(
@@ -39,16 +60,20 @@ def listar_eventos(
     status_code=HTTPStatus.OK,
     response_model=Evento_retorno_Schema,
 )
-def listar_eventos_por_id(id_evento: int, session: Session):
+async def listar_eventos_por_id(
+    id_evento: int, request: Request, session: Session
+):
 
-    eventos = session.scalar(select(Evento).where(Evento.id == id_evento))
+    eventos = await session.scalar(
+        select(Evento).where(Evento.id == id_evento)
+    )
 
     if not eventos:
         raise HTTPException(
             status_code=HTTPStatus.NOT_FOUND, detail='Evento não encontrado'
         )
 
-    return eventos
+    return await preparar_evento(eventos, session, request)
 
 
 # POST
@@ -57,8 +82,10 @@ def listar_eventos_por_id(id_evento: int, session: Session):
     status_code=HTTPStatus.CREATED,
     response_model=Evento_retorno_Schema,
 )
-def criar_eventos(evento: Evento_Schema, session: Session):
-    evento_bd = session.scalar(
+async def criar_eventos(
+    evento: Evento_Schema, request: Request, session: Session
+):
+    evento_bd = await session.scalar(
         select(Evento).where(Evento.titulo == evento.titulo)
     )
 
@@ -71,11 +98,11 @@ def criar_eventos(evento: Evento_Schema, session: Session):
     evento_bd = Evento(**evento.model_dump())
 
     session.add(evento_bd)
-    session.commit()
+    await session.commit()
 
-    session.refresh(evento_bd)
+    await session.refresh(evento_bd)
 
-    return evento_bd
+    return await preparar_evento(evento_bd, session, request)
 
 
 # PUT
@@ -84,8 +111,15 @@ def criar_eventos(evento: Evento_Schema, session: Session):
     status_code=HTTPStatus.OK,
     response_model=Evento_retorno_Schema,
 )
-def atualizar_evento(evento: Evento_Schema, id_evento: int, session: Session):
-    evento_bd = session.scalar(select(Evento).where(Evento.id == id_evento))
+async def atualizar_evento(
+    evento: Evento_Schema,
+    id_evento: int,
+    request: Request,
+    session: Session,
+):
+    evento_bd = await session.scalar(
+        select(Evento).where(Evento.id == id_evento)
+    )
     if not evento_bd:
         raise HTTPException(
             status_code=HTTPStatus.NOT_FOUND, detail='Evento não encontrado'
@@ -95,11 +129,12 @@ def atualizar_evento(evento: Evento_Schema, id_evento: int, session: Session):
         for chave, valor in evento.model_dump(exclude_unset=True).items():
             setattr(evento_bd, chave, valor)
 
-        session.commit()
-        session.refresh(evento_bd)
+        await session.commit()
+        await session.refresh(evento_bd)
 
-        return evento_bd
+        return await preparar_evento(evento_bd, session, request)
     except IntegrityError:
+        await session.rollback()
         raise HTTPException(
             status_code=HTTPStatus.CONFLICT,
             detail='Evento já existe!',
@@ -112,13 +147,15 @@ def atualizar_evento(evento: Evento_Schema, id_evento: int, session: Session):
     status_code=HTTPStatus.OK,
     response_model=MessageSchema,
 )
-def remover_evento(id_evento: int, session: Session):
-    evento_bd = session.scalar(select(Evento).where(Evento.id == id_evento))
+async def remover_evento(id_evento: int, session: Session):
+    evento_bd = await session.scalar(
+        select(Evento).where(Evento.id == id_evento)
+    )
     if not evento_bd:
         raise HTTPException(
             status_code=HTTPStatus.NOT_FOUND, detail='Evento não encontrado'
         )
-    session.delete(evento_bd)
-    session.commit()
+    await session.delete(evento_bd)
+    await session.commit()
 
     return {'mensagem': 'Evento removido com sucesso!'}

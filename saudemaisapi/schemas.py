@@ -194,6 +194,16 @@ class Evento_retorno_Schema(Evento_Schema):
 
     comentarios: list[Comentario_retorno_Schema] = Field(default_factory=list)
 
+    foto_capa: str | None = None
+    data: str | None = None
+    data_exibicao: str | None = Field(
+        default=None, serialization_alias='dataExibicao'
+    )
+    localizacao: str | None = None
+    numero_participantes: int = 0
+    categoria_nome: str | None = None
+    regiao: str | None = None
+
 
 class Eventos_list_Schema(BaseModel):
     model_config = ConfigDict(from_attributes=True)

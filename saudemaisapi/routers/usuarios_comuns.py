@@ -3,7 +3,7 @@ from typing import Annotated
 
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy import select
-from sqlalchemy.orm import Session
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from saudemaisapi.database import get_db
 from saudemaisapi.models import Usuario_comum
@@ -16,7 +16,7 @@ from saudemaisapi.schemas import (
 
 router = APIRouter(prefix='/usuarios/comum', tags=['Usuarios comuns'])
 
-Session = Annotated[Session, Depends(get_db)]
+Session = Annotated[AsyncSession, Depends(get_db)]
 # Usuario Comum
 
 
@@ -28,10 +28,10 @@ Session = Annotated[Session, Depends(get_db)]
     status_code=HTTPStatus.OK,
     response_model=Usuario_comum_lista_Schema,
 )
-def listar_usuarios_comum(
+async def listar_usuarios_comum(
     session: Session, filtro: Annotated[Filtro_Paginas, Query()]
 ):
-    usuario_comuns = session.scalars(
+    usuario_comuns = await session.scalars(
         select(Usuario_comum).limit(filtro.limit).offset(filtro.offset)
     )
 
@@ -43,9 +43,8 @@ def listar_usuarios_comum(
     status_code=HTTPStatus.OK,
     response_model=Usuario_comum_retorno_Schema,
 )
-def listar_usuario_comum_por_id(id_comum: int, session: Session):
-
-    usuario_comum = session.scalar(
+async def listar_usuario_comum_por_id(id_comum: int, session: Session):
+    usuario_comum = await session.scalar(
         select(Usuario_comum).where(Usuario_comum.id == id_comum)
     )
 
@@ -65,8 +64,8 @@ def listar_usuario_comum_por_id(id_comum: int, session: Session):
     status_code=HTTPStatus.CREATED,
     response_model=Usuario_comum_retorno_Schema,
 )
-def criar_usuario_comum(usuario_comum: Usuario_comum, session: Session):
-    usuario_comum_bd = session.scalar(
+async def criar_usuario_comum(usuario_comum: Usuario_comum, session: Session):
+    usuario_comum_bd = await session.scalar(
         select(Usuario_comum).where(Usuario_comum.nome == usuario_comum.nome)
     )
 
@@ -79,9 +78,9 @@ def criar_usuario_comum(usuario_comum: Usuario_comum, session: Session):
     usuario_comum_bd = Usuario_comum(**usuario_comum.model_dump())
 
     session.add(usuario_comum_bd)
-    session.commit()
+    await session.commit()
 
-    session.refresh(usuario_comum_bd)
+    await session.refresh(usuario_comum_bd)
 
     return usuario_comum_bd
 
@@ -92,12 +91,12 @@ def criar_usuario_comum(usuario_comum: Usuario_comum, session: Session):
     status_code=HTTPStatus.OK,
     response_model=Usuario_comum_retorno_Schema,
 )
-def atualizar_usuario_comum(
+async def atualizar_usuario_comum(
     usuario_comum: Usuario_comum,
     id_usuario: int,
     session: Session,
 ):
-    usuario_comum_bd = session.scalar(
+    usuario_comum_bd = await session.scalar(
         select(Usuario_comum).where(Usuario_comum.id == id_usuario)
     )
 
@@ -110,9 +109,9 @@ def atualizar_usuario_comum(
     usuario_comum_bd = Usuario_comum(**usuario_comum.model_dump())
 
     session.add(usuario_comum_bd)
-    session.commit()
+    await session.commit()
 
-    session.refresh(usuario_comum_bd)
+    await session.refresh(usuario_comum_bd)
 
     return usuario_comum_bd
 
@@ -123,8 +122,8 @@ def atualizar_usuario_comum(
     status_code=HTTPStatus.OK,
     response_model=MessageSchema,
 )
-def remover_usuario_comum(id_usuario: int, session: Session):
-    usuario_comum_bd = session.scalar(
+async def remover_usuario_comum(id_usuario: int, session: Session):
+    usuario_comum_bd = await session.scalar(
         select(Usuario_comum).where(Usuario_comum.id == id_usuario)
     )
 
@@ -132,7 +131,7 @@ def remover_usuario_comum(id_usuario: int, session: Session):
         raise HTTPException(
             status_code=HTTPStatus.NOT_FOUND, detail='Usuário não encontrado'
         )
-    session.delete(usuario_comum_bd)
-    session.commit()
+    await session.delete(usuario_comum_bd)
+    await session.commit()
 
     return {'mensagem': 'Usuário removido com sucesso!'}

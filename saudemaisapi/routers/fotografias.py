@@ -14,7 +14,7 @@ from fastapi import (
 )
 from fastapi.responses import FileResponse
 from sqlalchemy import select
-from sqlalchemy.orm import Session
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from saudemaisapi.database import get_db
 from saudemaisapi.models import Fotografias
@@ -26,7 +26,7 @@ from saudemaisapi.schemas import (
 )
 
 router = APIRouter(prefix='/fotografias', tags=['Fotografias'])
-SessionDep = Annotated[Session, Depends(get_db)]
+SessionDep = Annotated[AsyncSession, Depends(get_db)]
 
 PASTA_UPLOADS = Path(__file__).resolve().parents[2] / 'uploads'
 TAMANHO_MAXIMO = 5 * 1024 * 1024
@@ -64,19 +64,21 @@ async def salvar_arquivo(arquivo: UploadFile):
 
 
 @router.get('/', response_model=Fotografia_lista_Schema)
-def listar_fotografias(
+async def listar_fotografias(
     session: SessionDep,
     filtro: Annotated[Filtro_Paginas, Query()],
 ):
-    fotografias = session.scalars(
-        select(Fotografias).limit(filtro.limit).offset(filtro.offset)
+    fotografias = (
+        await session.scalars(
+            select(Fotografias).limit(filtro.limit).offset(filtro.offset)
+        )
     ).all()
     return {'fotografias': fotografias}
 
 
 @router.get('/{id_fotografia}', response_model=Fotografia_retorno_Schema)
-def listar_fotografia_por_id(id_fotografia: int, session: SessionDep):
-    fotografia = session.get(Fotografias, id_fotografia)
+async def listar_fotografia_por_id(id_fotografia: int, session: SessionDep):
+    fotografia = await session.get(Fotografias, id_fotografia)
     if not fotografia:
         raise HTTPException(
             status_code=HTTPStatus.NOT_FOUND,
@@ -86,8 +88,8 @@ def listar_fotografia_por_id(id_fotografia: int, session: SessionDep):
 
 
 @router.get('/{id_fotografia}/arquivo', response_class=FileResponse)
-def obter_arquivo(id_fotografia: int, session: SessionDep):
-    fotografia = session.get(Fotografias, id_fotografia)
+async def obter_arquivo(id_fotografia: int, session: SessionDep):
+    fotografia = await session.get(Fotografias, id_fotografia)
     if not fotografia or not Path(fotografia.caminho).is_file():
         raise HTTPException(
             status_code=HTTPStatus.NOT_FOUND,
@@ -120,12 +122,12 @@ async def criar_fotografia(
     )
     session.add(fotografia)
     try:
-        session.commit()
+        await session.commit()
     except Exception:
-        session.rollback()
+        await session.rollback()
         caminho.unlink(missing_ok=True)
         raise
-    session.refresh(fotografia)
+    await session.refresh(fotografia)
     return fotografia
 
 
@@ -139,7 +141,7 @@ async def atualizar_fotografia(
     arquivo: Annotated[UploadFile, File()],
     foto_de_evento: Annotated[bool, Form()] = False,
 ):
-    fotografia = session.get(Fotografias, id_fotografia)
+    fotografia = await session.get(Fotografias, id_fotografia)
     if not fotografia:
         raise HTTPException(
             status_code=HTTPStatus.NOT_FOUND,
@@ -154,12 +156,12 @@ async def atualizar_fotografia(
     fotografia.tamanho = tamanho
     fotografia.foto_de_evento = foto_de_evento
     try:
-        session.commit()
+        await session.commit()
     except Exception:
-        session.rollback()
+        await session.rollback()
         caminho_novo.unlink(missing_ok=True)
         raise
-    session.refresh(fotografia)
+    await session.refresh(fotografia)
     caminho_antigo.unlink(missing_ok=True)
     return fotografia
 
@@ -168,8 +170,8 @@ async def atualizar_fotografia(
     '/remover_fotografia/{id_fotografia}',
     response_model=MessageSchema,
 )
-def remover_fotografia(id_fotografia: int, session: SessionDep):
-    fotografia = session.get(Fotografias, id_fotografia)
+async def remover_fotografia(id_fotografia: int, session: SessionDep):
+    fotografia = await session.get(Fotografias, id_fotografia)
     if not fotografia:
         raise HTTPException(
             status_code=HTTPStatus.NOT_FOUND,
@@ -177,7 +179,7 @@ def remover_fotografia(id_fotografia: int, session: SessionDep):
         )
 
     caminho = Path(fotografia.caminho)
-    session.delete(fotografia)
-    session.commit()
+    await session.delete(fotografia)
+    await session.commit()
     caminho.unlink(missing_ok=True)
     return {'mensagem': 'Fotografia removida com sucesso!'}

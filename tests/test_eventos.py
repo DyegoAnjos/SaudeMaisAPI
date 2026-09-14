@@ -3,6 +3,22 @@ from http import HTTPStatus
 from saudemaisapi.schemas import Evento_retorno_Schema
 
 
+def adicionar_campos_do_front(evento):
+    data = evento['data_hora_evento'][:10]
+    ano, mes, dia = data.split('-')
+    evento['foto_capa'] = (
+        f'http://testserver/fotografias/{evento["foto_evento"]}/arquivo'
+    )
+    evento['data'] = data
+    evento['dataExibicao'] = f'{dia}/{mes}/{ano}'
+    evento.pop('data_exibicao', None)
+    evento['localizacao'] = evento['endereco']
+    evento['numero_participantes'] = evento['inscricoes_atuais']
+    evento['categoria_nome'] = None
+    evento['regiao'] = None
+    return evento
+
+
 def teste_criar_evento(client, mock_db_time, evento):
     resposta = client.post(
         '/eventos/criar_evento/',
@@ -22,7 +38,7 @@ def teste_criar_evento(client, mock_db_time, evento):
         },
     )
     assert resposta.status_code == HTTPStatus.CREATED
-    assert resposta.json() == {
+    esperado = {
         'id': 2,
         'titulo': 'Vem Zumbar 2',
         'descricao': 'Evento de zumba',
@@ -43,6 +59,7 @@ def teste_criar_evento(client, mock_db_time, evento):
         'data_hora_ultima_atualizacao': None,
         'comentarios': [],
     }
+    assert resposta.json() == adicionar_campos_do_front(esperado)
 
 
 def test_criar_evento_existente(client, mock_db_time, evento):
@@ -77,13 +94,13 @@ def teste_listar_eventos(client, evento, mock_db_time):
     resposta = client.get('/eventos/')
 
     assert resposta.status_code == HTTPStatus.OK
-    assert resposta.json() == {'eventos': [evento_schema]}
+    assert resposta.json() == [adicionar_campos_do_front(evento_schema)]
 
 
 def teste_lista_eventos_null(client):
     resposta = client.get('/eventos/')
     assert resposta.status_code == HTTPStatus.OK
-    assert resposta.json() == {'eventos': []}
+    assert resposta.json() == []
 
 
 def teste_listar_eventos_por_id_not_found(client):
@@ -103,7 +120,7 @@ def teste_listar_evento_por_id(client, evento, mock_db_time):
 
     assert resposta.status_code == HTTPStatus.OK
 
-    assert resposta.json() == evento_schema
+    assert resposta.json() == adicionar_campos_do_front(evento_schema)
 
 
 def teste_atualizar_evento_not_found(client, mock_db_time, evento):
@@ -155,7 +172,7 @@ def teste_atualizar_evento(client, evento, mock_db_time):
 
     resposta['data_hora_ultima_atualizacao'] = mock_db_time.isoformat()
 
-    assert resposta == {
+    esperado = {
         'id': 1,
         'titulo': 'Vem Zumbar atualizado',
         'descricao': 'Evento de zumba',
@@ -176,6 +193,7 @@ def teste_atualizar_evento(client, evento, mock_db_time):
         'data_hora_ultima_atualizacao': mock_db_time.isoformat(),
         'comentarios': [],
     }
+    assert resposta == adicionar_campos_do_front(esperado)
 
 
 def teste_atualizar_evento_integridade(client, evento, mock_db_time):

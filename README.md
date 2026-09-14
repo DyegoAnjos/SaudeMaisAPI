@@ -33,7 +33,7 @@ O arquivo `.env` deve existir na raiz do projeto com o seguinte conteudo para
 usar um banco SQLite local:
 
 ```env
-DATABASE_URL=sqlite:///./saudemais.db
+DATABASE_URL=sqlite+aiosqlite:///./saudemais.db
 ```
 
 Crie ou atualize as tabelas do banco:

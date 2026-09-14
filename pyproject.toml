@@ -10,8 +10,9 @@ requires-python = ">=3.14,<4.0"
 dependencies = [
     "fastapi[standard] (>=0.139.0,<0.140.0)",
     "pydantic-settings (>=2.14.2,<3.0.0)",
-    "sqlalchemy (>=2.0.51,<3.0.0)",
-    "alembic (>=1.18.5,<2.0.0)"
+    "sqlalchemy[asyncio] (>=2.0.51,<3.0.0)",
+    "alembic (>=1.18.5,<2.0.0)",
+    "aiosqlite (>=0.22.1,<0.23.0)"
 ]
 
 
@@ -44,9 +45,10 @@ ignore = [
 [tool.ruff.format]
 quote-style = "single"
 
-[tool.pytest]
+[tool.pytest.ini_options]
 pythonpath = ['.']
 addopts = ['-p', 'no:warnings', '--cov=fast_zero', '--cov-context=test']
+asyncio_default_fixture_loop_scope = 'function'
 
 [tool.taskipy.tasks]
 lint = 'ruff check'
@@ -56,3 +58,6 @@ run = 'fastapi dev saudemaisapi/app.py'
 pre_test = 'task format'
 test = 'pytest -s -x --cov=saudemaisapi -vv'
 post_test = 'coverage html --show-contexts'
+
+[tool.coverage.run]
+concurrency = ["thread", "greenlet"]
