@@ -175,7 +175,7 @@ class Fotografias:
 class Evento:
     __tablename__ = 'evento'
 
-    # 1. Campos de controle (init=False ficam protegidos no início)
+    #(init=False ficam protegidos no início)
     id: Mapped[int] = mapped_column(
         init=False, primary_key=True, autoincrement='auto'
     )
@@ -183,21 +183,18 @@ class Evento:
         init=False, server_default=func.now()
     )
 
-    # 2. OBRIGATÓRIOS PRIMEIRO (Nenhum destes possui valor padrão)
     titulo: Mapped[str] = mapped_column(unique=True)
     descricao: Mapped[str | None]
     data_hora_evento: Mapped[datetime]
     data_hora_fim: Mapped[datetime]
     publico_alvo: Mapped[str]
 
-    # 💡 Corrigidos para ForeignKey maiúsculo
     categoria: Mapped[int] = mapped_column(ForeignKey('categoria.id'))
     foto_evento: Mapped[int] = mapped_column(ForeignKey('fotografias.id'))
     criador_institucional: Mapped[int] = mapped_column(
         ForeignKey('usuario_institucional.id')
     )
 
-    # 3. OPCIONAIS COM VALOR PADRÃO DEPOIS (Todos têm default ou default=None)
     status: Mapped[str] = mapped_column(default='Pendente')
     capacidade_maxima: Mapped[int | None] = mapped_column(default=None)
     unidade_associada: Mapped[int | None] = mapped_column(default=None)
