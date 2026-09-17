@@ -76,6 +76,27 @@ async def listar_eventos_por_id(
     return await preparar_evento(eventos, session, request)
 
 
+@router.get(
+    '/regiao/{regiao}',
+    status_code=HTTPStatus.OK,
+    response_model=list[Evento_retorno_Schema],  # Espera uma lista na resposta
+)
+async def listar_eventos_regiao(
+    regiao: str, request: Request, session: Session
+):
+    query = await session.scalars(
+        select(Evento).where(Evento.endereco.like(f"%{regiao}%"))
+    )
+    eventos = query.all()
+
+    if not eventos:
+        raise HTTPException(
+            status_code=HTTPStatus.NOT_FOUND, detail='Evento não encontrado'
+        )
+
+    # Aplica o 'preparar_evento' item por item dentro da lista:
+    return [await preparar_evento(evento, session, request) for evento in eventos]
+
 # POST
 @router.post(
     '/criar_evento/',

@@ -166,7 +166,7 @@ class Evento_Schema(BaseModel):
     foto_evento: int
     criador_institucional: int
 
-    capacidade_maxima: int | None = Field(default=None, gt=0)
+    capacidade_maxima: int = Field(ge=0)
     unidade_associada: int | None = None
     endereco: str | None = None
     pagina_evento: str | None = None

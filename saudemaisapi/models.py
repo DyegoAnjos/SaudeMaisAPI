@@ -175,7 +175,7 @@ class Fotografias:
 class Evento:
     __tablename__ = 'evento'
 
-    #(init=False ficam protegidos no início)
+    # (init=False ficam protegidos no início)
     id: Mapped[int] = mapped_column(
         init=False, primary_key=True, autoincrement='auto'
     )

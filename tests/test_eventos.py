@@ -252,3 +252,30 @@ def teste_remover_evento(client, evento):
     assert resposta.status_code == HTTPStatus.OK
 
     assert resposta.json() == {'mensagem': 'Evento removido com sucesso!'}
+
+
+# =====================================================================
+# TESTES DA ROTA: GET /eventos/{regiao}
+# =====================================================================
+
+
+def teste_listar_eventos_por_regiao(client, evento, mock_db_time):
+    evento_schema = Evento_retorno_Schema.model_validate(evento).model_dump()
+
+    evento_schema['data_hora_criacao'] = mock_db_time.isoformat()
+    evento_schema['data_hora_fim'] = mock_db_time.isoformat()
+    evento_schema['data_hora_evento'] = mock_db_time.isoformat()
+
+    # Rota atualizada com /regiao/
+    resposta = client.get('/eventos/regiao/Arena')
+
+    assert resposta.status_code == HTTPStatus.OK
+    assert resposta.json() == adicionar_campos_do_front(evento_schema)
+
+
+def teste_listar_eventos_por_regiao_not_found(client):
+    # Rota atualizada com /regiao/
+    resposta = client.get('/eventos/regiao/RegiaoInexistente')
+
+    assert resposta.status_code == HTTPStatus.NOT_FOUND
+    assert resposta.json() == {'detail': 'Evento não encontrado'}
