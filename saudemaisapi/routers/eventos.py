@@ -95,7 +95,7 @@ async def listar_eventos_regiao(
         )
 
     # Aplica o 'preparar_evento' item por item dentro da lista:
-    return [await preparar_evento(evento, session, request) for evento in eventos]
+    return [await preparar_evento(evento, session, request) for evento in eventos]  
 
 # POST
 @router.post(
