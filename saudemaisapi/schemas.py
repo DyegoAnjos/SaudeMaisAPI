@@ -213,3 +213,8 @@ class Eventos_list_Schema(BaseModel):
 class Filtro_Paginas(BaseModel):
     limit: int = Field(default=10, ge=1, le=100)
     offset: int = Field(default=0, ge=0)
+
+
+class Login_Schema(BaseModel):
+    e_mail: str
+    senha: str

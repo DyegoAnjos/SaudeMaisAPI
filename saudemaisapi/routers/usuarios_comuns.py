@@ -10,7 +10,6 @@ from saudemaisapi.models import Usuario_comum
 from saudemaisapi.schemas import (
     Filtro_Paginas,
     MessageSchema,
-    Usuario_comum_lista_Schema,
     Usuario_comum_retorno_Schema,
 )
 
@@ -26,7 +25,7 @@ Session = Annotated[AsyncSession, Depends(get_db)]
 @router.get(
     '/',
     status_code=HTTPStatus.OK,
-    response_model=Usuario_comum_lista_Schema,
+    response_model=list[Usuario_comum_retorno_Schema],
 )
 async def listar_usuarios_comum(
     session: Session, filtro: Annotated[Filtro_Paginas, Query()]

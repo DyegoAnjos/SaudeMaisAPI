@@ -85,7 +85,7 @@ async def listar_eventos_regiao(
     regiao: str, request: Request, session: Session
 ):
     query = await session.scalars(
-        select(Evento).where(Evento.endereco.like(f"%{regiao}%"))
+        select(Evento).where(Evento.endereco.like(f'%{regiao}%'))
     )
     eventos = query.all()
 
@@ -94,8 +94,10 @@ async def listar_eventos_regiao(
             status_code=HTTPStatus.NOT_FOUND, detail='Evento não encontrado'
         )
 
-    # Aplica o 'preparar_evento' item por item dentro da lista:
-    return [await preparar_evento(evento, session, request) for evento in eventos]  
+    return [
+        await preparar_evento(evento, session, request) for evento in eventos
+    ]
+
 
 # POST
 @router.post(

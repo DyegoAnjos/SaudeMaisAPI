@@ -15,7 +15,6 @@ ENV/
 .env
 
 # Banco de dados local (SQLite)
-*.db
 *.sqlite3
 
 # Fotografias enviadas localmente

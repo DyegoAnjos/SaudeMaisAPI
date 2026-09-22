@@ -1,64 +1,82 @@
 # Saude+ API
 
-API do projeto Saude+, desenvolvida com FastAPI, SQLAlchemy e Alembic.
+API do projeto Saude+, desenvolvida com **FastAPI**, **SQLAlchemy** e **Alembic** para gerenciamento de eventos, categorias, unidades de saúde e fotografias.
 
-## Requisitos
+---
 
-- Python 3.14 ou superior
-- Windows PowerShell
+## 🛠️ Requisitos
 
-## Preparar o projeto pela primeira vez
+* **Python:** 3.14 ou superior
+* **Sistema Operacional:** Windows PowerShell (ou terminal Bash/Linux/Mac)
 
-Abra o PowerShell na pasta do projeto e crie um ambiente virtual:
+---
 
-```powershell
-py -3.14 -m venv .venv
-```
+## 🚀 Preparar o projeto pela primeira vez
 
-Ative o ambiente virtual:
+1. **Abra o terminal na pasta raiz do projeto** e crie um ambiente virtual:
+   
+   ```powershell
+   py -3.14 -m venv .venv
+   ```
 
-```powershell
-.\.venv\Scripts\Activate.ps1
-```
+2. **Ative o ambiente virtual:**
+   
+   ```powershell
+   .\.venv\Scripts\Activate.ps1
+   ```
+   
+   > 💡 **Nota de permissão:** Se o PowerShell exibir um erro de execução de scripts, rode o comando abaixo uma única vez no terminal como Administrador:
+   > 
+   > ```powershell
+   > Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope CurrentUser
+   > ```
 
-Instale o projeto e suas dependencias:
+3. **Instale o projeto e suas dependências de desenvolvimento:**
+   
+   ```powershell
+   python -m pip install --group dev -e .
+   ```
 
-```powershell
-python -m pip install --group dev -e .
-```
+---
 
-## Configurar o banco de dados
+## ⚙️ Configurar o ambiente e o banco de dados
 
-O arquivo `.env` deve existir na raiz do projeto com o seguinte conteudo para
-usar um banco SQLite local:
+1. **Crie um arquivo `.env` na raiz do projeto** com o seguinte conteúdo para utilizar o banco SQLite local:
+   
+   ```env
+   DATABASE_URL=sqlite+aiosqlite:///./saudemais.db
+   ```
 
-```env
-DATABASE_URL=sqlite+aiosqlite:///./saudemais.db
-```
+2. **Crie a pasta de uploads** para o armazenamento local das fotos enviadas pela API:
+   
+   ```powershell
+   mkdir uploads
+   ```
 
-Crie ou atualize as tabelas do banco:
+3. **Crie ou atualize as tabelas do banco de dados via Alembic:**
+   
+   ```powershell
+   alembic upgrade head
+   ```
 
-```powershell
-alembic upgrade head
-```
+---
 
-## Iniciar a API
+## 💻 Iniciar a API
 
-Com o ambiente virtual ativado, execute:
+Com o ambiente virtual ativado, execute o servidor de desenvolvimento:
 
 ```powershell
 fastapi dev saudemaisapi/app.py
 ```
 
-Depois, acesse:
+Acesse no seu navegador:
 
-- Verificacao da API: http://127.0.0.1:8000/
-- Documentacao interativa: http://127.0.0.1:8000/docs
+* **Verificação de status:** [http://127.0.0.1:8000/](http://127.0.0.1:8000/)
+* **Documentação interativa (Swagger UI):** [http://127.0.0.1:8000/docs](http://127.0.0.1:8000/docs)
 
-Durante o desenvolvimento, a API aceita requisicoes de fronts locais nas
-portas `3000` e `5173`, usando `localhost` ou `127.0.0.1`.
+*Durante o desenvolvimento, a API aceita requisições de front-ends locais nas portas `3000` e `5173` (`localhost` ou `127.0.0.1`).*
 
-A rota inicial deve responder:
+A rota inicial (`GET /`) deve responder:
 
 ```json
 {
@@ -66,61 +84,83 @@ A rota inicial deve responder:
 }
 ```
 
-## Executar os testes
+---
+
+## 🌐 Expor a API com o ngrok (Opcional)
+
+Para testar a API com aplicações externas ou mobile via túnel público:
+
+1. **Inicie o servidor local na porta 8000:**
+   
+   ```powershell
+   fastapi dev saudemaisapi/app.py
+   ```
+2. **Em outro terminal, abra o túnel ngrok:**
+   
+   ```powershell
+   ngrok http 8000
+   ```
+3. **Acesse a documentação remota:** `https://<seu-subdominio>.ngrok-free.app/docs`
+
+---
+
+## 🧪 Executar os testes automatizados
+
+Para rodar a suíte completa de testes com o **Pytest**:
 
 ```powershell
 pytest
 ```
 
-O Pytest executa automaticamente funcoes cujo nome comeca com `test`. Para
-confirmar quais testes foram encontrados sem executa-los, use:
+Para apenas listar quais testes foram encontrados sem executá-los:
 
 ```powershell
 pytest --collect-only
 ```
 
-## Estrutura principal
+---
 
-- `saudemaisapi/app.py`: cria a aplicacao e registra as rotas.
-- `saudemaisapi/models.py`: define as tabelas do banco.
-- `saudemaisapi/schemas.py`: define os dados recebidos e devolvidos pela API.
-- `saudemaisapi/routers/`: contem as rotas de cada recurso.
-- `migrations/`: contem o historico de alteracoes do banco.
-- `tests/`: contem os testes automatizados.
+## 📂 Estrutura do Projeto
 
-## Rotas de categorias e unidades de saude
+```text
+SaudeMaisAPI/
+├── saudemaisapi/
+│   ├── app.py              # Instância principal do FastAPI e inclusão de roteadores
+│   ├── models.py           # Modelos de tabelas do banco de dados (SQLAlchemy)
+│   ├── schemas.py          # Schemas e validações de dados (Pydantic)
+│   └── routers/            # Endpoints segregados por recurso (eventos, fotografias, etc.)
+├── migrations/             # Histórico de migrações da base de dados (Alembic)
+├── uploads/                # Armazenamento de arquivos estáticos de imagem
+├── tests/                  # Testes unitários e de integração (Pytest)
+├── alembic.ini             # Arquivo de configuração do Alembic
+└── pyproject.toml          # Gerenciamento de dependências e metadados
+```
 
-As duas funcionalidades oferecem as operacoes completas de cadastro:
+---
 
-- `GET /categorias/` e `GET /unidades-saude/`: listar.
-- `GET /categorias/{id}` e `GET /unidades-saude/{id}`: buscar por ID.
-- `POST /categorias/` e `POST /unidades-saude/`: criar.
-- `PUT /categorias/{id}` e `PUT /unidades-saude/{id}`: atualizar.
-- `DELETE /categorias/{id}` e `DELETE /unidades-saude/{id}`: remover.
+## 📌 Principais Regras e Validações
 
-## Validacoes principais
+* **Nota de comentário:** Valor numérico entre 0 e 5.
+* **Capacidade máxima de evento:** Maior que zero (`gt=0`), quando informada.
+* **Data do evento:** A data de fim não pode ser anterior à data de início.
+* **Paginação:** `limit` entre 1 e 100 e `offset` maior ou igual a zero.
+* **Coordenadas geográficas:** Latitude entre -90 e 90, e longitude entre -180 e 180.
+* **Lotação e tempo médio:** Não aceitam valores negativos.
 
-- Nota de comentario: entre 0 e 5.
-- Capacidade maxima de evento: maior que zero, quando informada.
-- Data final do evento: nao pode ser anterior a data inicial.
-- Paginacao: `limit` entre 1 e 100 e `offset` maior ou igual a zero.
-- Coordenadas: latitude entre -90 e 90 e longitude entre -180 e 180.
-- Lotacao e tempo medio de atendimento: nao podem ser negativos.
+---
 
-## Fotografias
+## 🖼️ Módulo de Fotografias
 
-As fotografias sao enviadas como `multipart/form-data`. A API aceita imagens
-JPEG, PNG e WebP com tamanho maximo de 5 MB. O arquivo e salvo na pasta
-`uploads/` com um nome unico, enquanto o banco guarda o caminho, o nome
-original, o tipo e o tamanho.
+As imagens são enviadas como `multipart/form-data` (formatos aceitos: JPEG, PNG e WebP; tamanho máximo de 5 MB). O arquivo físico é salvo na pasta `uploads/` com UUID único, e seus metadados são salvos no banco.
 
-- `POST /fotografias/criar_fotografia`: enviar uma imagem.
-- `GET /fotografias/{id}`: consultar os metadados.
-- `GET /fotografias/{id}/arquivo`: baixar ou exibir a imagem.
-- `PUT /fotografias/atualizar_fotografia/{id}`: trocar a imagem.
-- `DELETE /fotografias/remover_fotografia/{id}`: remover a imagem.
+* `POST /fotografias/criar_fotografia`: Enviar uma imagem.
+* `GET /fotografias/{id}`: Consultar metadados.
+* `GET /fotografias/{id}/arquivo`: Baixar ou visualizar a imagem.
+* `PUT /fotografias/atualizar_fotografia/{id}`: Substituir a imagem.
+* `DELETE /fotografias/remover_fotografia/{id}`: Excluir a imagem.
 
-## Observacao de seguranca
+---
 
-O arquivo `.env` pode conter dados privados e nao deve ser enviado ao GitHub.
-Ele ja esta listado no `.gitignore` deste projeto.
+## 🔒 Segurança
+
+O arquivo `.env` pode conter dados sensíveis e **nunca deve ser commitado** no repositório (já configurado no `.gitignore`).
