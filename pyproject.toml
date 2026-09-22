@@ -47,7 +47,7 @@ quote-style = "single"
 
 [tool.pytest.ini_options]
 pythonpath = ['.']
-addopts = ['-p', 'no:warnings', '--cov=fast_zero', '--cov-context=test']
+addopts = ['-p', 'no:warnings', '--cov=saudemaisapi', '--cov-context=test']
 asyncio_default_fixture_loop_scope = 'function'
 
 [tool.taskipy.tasks]

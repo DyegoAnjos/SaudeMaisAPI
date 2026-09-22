@@ -22,7 +22,7 @@ Session = Annotated[AsyncSession, Depends(get_db)]
 # Geral Usuario
 
 
-@router.get(
+@router.post(
     '/validar',
     status_code=HTTPStatus.OK,
     response_model=Usuario_retorno_Schema,
@@ -30,7 +30,7 @@ Session = Annotated[AsyncSession, Depends(get_db)]
 async def validar(session: Session, login: Login_Schema):
     usuario = await session.scalar(
         select(Usuario_comum).where(
-            Usuario_comum.email == login.e_mail
+            Usuario_comum.email == login.email
             and Usuario_comum.senha == login.senha
         )
     )

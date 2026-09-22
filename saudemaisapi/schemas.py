@@ -216,5 +216,5 @@ class Filtro_Paginas(BaseModel):
 
 
 class Login_Schema(BaseModel):
-    e_mail: str
+    email: str
     senha: str

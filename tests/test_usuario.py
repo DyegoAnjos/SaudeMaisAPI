@@ -1,24 +1,58 @@
-from encodings import normalize_encoding
 from http import HTTPStatus
-from multiprocessing.reduction import send_handle
 
-from saudemaisapi.schemas import Usuario_retorno_Schema
 
-def teste_validar_usuario_comum(cliente, usuario_comum):
-    id(
-        email
-        nome(senha())
-    )
+def teste_validar_usuario_comum(client, usuario_comum):
 
-    usuario_schema = Usuario_retorno_Schema.model_validate(usuario_comum).model_dump()
-
-    resposta = cliente.get(
+    resposta = client.post(
         '/usuarios/validar',
         json={
             'email': usuario_comum.email,
             'senha': usuario_comum.senha,
-        }
-        )
+        },
+    )
 
     assert resposta.status_code == HTTPStatus.OK
-    assert resposta.json() == Usuario_retorno_Schema.dict()
+    assert resposta.json() == {
+        'id': usuario_comum.id,
+        'email': usuario_comum.email,
+        'nome': usuario_comum.nome,
+        'senha': usuario_comum.senha,
+    }
+
+
+def teste_validar_usuario_institucional(client, usuario_institucional):
+
+    resposta = client.post(
+        '/usuarios/validar',
+        json={
+            'email': usuario_institucional.email,
+            'senha': usuario_institucional.senha,
+        },
+    )
+
+    assert resposta.status_code == HTTPStatus.OK
+    assert resposta.json() == {
+        'id': usuario_institucional.id,
+        'email': usuario_institucional.email,
+        'nome': usuario_institucional.nome,
+        'senha': usuario_institucional.senha,
+    }
+
+
+def teste_validar_usuario_administrador(client, usuario_administrador):
+
+    resposta = client.post(
+        '/usuarios/validar',
+        json={
+            'email': usuario_administrador.email,
+            'senha': usuario_administrador.senha,
+        },
+    )
+
+    assert resposta.status_code == HTTPStatus.OK
+    assert resposta.json() == {
+        'id': usuario_administrador.id,
+        'email': usuario_administrador.email,
+        'nome': usuario_administrador.nome,
+        'senha': usuario_administrador.senha,
+    }
