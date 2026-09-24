@@ -218,3 +218,9 @@ class Filtro_Paginas(BaseModel):
 class Login_Schema(BaseModel):
     email: str
     senha: str
+
+
+class Login_retorno_Schema(BaseModel):
+    model_config = {'from_attributes': True}
+    id: int
+    tipo: str

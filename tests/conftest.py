@@ -104,28 +104,28 @@ async def usuario_comum(session: AsyncSession):
     return usuario
 
 
-@pytest.fixture
-def usuario_institucional(session):
+@pytest_asyncio.fixture
+async def usuario_institucional(session):
     usuario = Usuario_institucional(
         email='institucional@gmail.com',
         nome='institutoExemplo',
         senha='segredo',
         cnpj='123456',
-        vinculo_institucao='Posto',
+        vinculo_instituicao='Posto',
         descricao='Posto de saúde',
         endereco='Pavuna',
         telefone='123456',
     )
 
     session.add(usuario)
-    session.commit()
-    session.refresh(usuario)
+    await session.commit()
+    await session.refresh(usuario)
 
     return usuario
 
 
-@pytest.fixture
-def usuario_administrador(session):
+@pytest_asyncio.fixture
+async def usuario_administrador(session):
     usuario = Usuario_administrador(
         email='institucional@gmail.com',
         nome='institutoExemplo',
@@ -134,14 +134,14 @@ def usuario_administrador(session):
     )
 
     session.add(usuario)
-    session.commit()
-    session.refresh(usuario)
+    await session.commit()
+    await session.refresh(usuario)
 
     return usuario
 
 
 @pytest.fixture
-def sugestao(session):
+async def sugestao(session):
     sugestao = Sugestao(
         titulo='Trocar o nome',
         conteudo='Seria bom trocar o nome',
@@ -150,8 +150,8 @@ def sugestao(session):
     )
 
     session.add(sugestao)
-    session.commit()
-    session.refresh(sugestao)
+    await session.commit()
+    await session.refresh(sugestao)
 
     return sugestao
 

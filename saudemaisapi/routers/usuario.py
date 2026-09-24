@@ -12,8 +12,8 @@ from saudemaisapi.models import (
     Usuario_institucional,
 )
 from saudemaisapi.schemas import (
+    Login_retorno_Schema,
     Login_Schema,
-    Usuario_retorno_Schema,
 )
 
 router = APIRouter(prefix='/usuarios', tags=['Usuarios'])
@@ -25,35 +25,31 @@ Session = Annotated[AsyncSession, Depends(get_db)]
 @router.post(
     '/validar',
     status_code=HTTPStatus.OK,
-    response_model=Usuario_retorno_Schema,
+    response_model=Login_retorno_Schema,
 )
 async def validar(session: Session, login: Login_Schema):
-    usuario = await session.scalar(
-        select(Usuario_comum).where(
-            Usuario_comum.email == login.email
-            and Usuario_comum.senha == login.senha
+    tipos_usuarios = [
+        Usuario_comum,
+        Usuario_institucional,
+        Usuario_administrador,
+    ]
+
+    for modelo in tipos_usuarios:
+        # Busca apenas a coluna id do banco de dados
+        resultado = await session.execute(
+            select(modelo.id).where(
+                modelo.email == login.email, modelo.senha == login.senha
+            )
         )
+        id_encontrado = resultado.scalar_one_or_none()
+
+        if id_encontrado is not None:
+            return {
+                'id': id_encontrado,
+                'tipo': modelo.__name__,
+            }
+
+    raise HTTPException(
+        status_code=HTTPStatus.NOT_FOUND,
+        detail='Usuário não encontrado',
     )
-
-    if not usuario:
-        usuario = await session.scalar(
-            select(Usuario_administrador).where(
-                Usuario_administrador.email == login.e_mail
-                and Usuario_administrador.senha == login.senha
-            )
-        )
-
-        if not usuario:
-            usuario = await session.scalar(
-                select(Usuario_institucional).where(
-                    Usuario_institucional.email == login.e_mail
-                    and Usuario_institucional.senha == login.senha
-                )
-            )
-
-            if not usuario:
-                raise HTTPException(
-                    status_code=HTTPStatus.NOT_FOUND,
-                    detail='Usuário não encontrado',
-                )
-    return usuario

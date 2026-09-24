@@ -59,7 +59,7 @@ async def listar_usuario_comum_por_id(id_comum: int, session: Session):
 
 
 @router.post(
-    '/criar_evento/',
+    '/criar_usuario/',
     status_code=HTTPStatus.CREATED,
     response_model=Usuario_comum_retorno_Schema,
 )

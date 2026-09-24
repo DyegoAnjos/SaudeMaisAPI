@@ -14,9 +14,7 @@ def teste_validar_usuario_comum(client, usuario_comum):
     assert resposta.status_code == HTTPStatus.OK
     assert resposta.json() == {
         'id': usuario_comum.id,
-        'email': usuario_comum.email,
-        'nome': usuario_comum.nome,
-        'senha': usuario_comum.senha,
+        'tipo': 'Usuario_comum',
     }
 
 
@@ -33,9 +31,7 @@ def teste_validar_usuario_institucional(client, usuario_institucional):
     assert resposta.status_code == HTTPStatus.OK
     assert resposta.json() == {
         'id': usuario_institucional.id,
-        'email': usuario_institucional.email,
-        'nome': usuario_institucional.nome,
-        'senha': usuario_institucional.senha,
+        'tipo': 'Usuario_institucional',
     }
 
 
@@ -52,7 +48,5 @@ def teste_validar_usuario_administrador(client, usuario_administrador):
     assert resposta.status_code == HTTPStatus.OK
     assert resposta.json() == {
         'id': usuario_administrador.id,
-        'email': usuario_administrador.email,
-        'nome': usuario_administrador.nome,
-        'senha': usuario_administrador.senha,
+        'tipo': 'Usuario_administrador',
     }
