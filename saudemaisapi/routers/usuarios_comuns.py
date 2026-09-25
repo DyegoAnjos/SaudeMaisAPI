@@ -4,7 +4,7 @@ from typing import Annotated
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
-from usuario import validar
+
 
 from saudemaisapi.database import get_db
 from saudemaisapi.models import Usuario_comum
@@ -72,9 +72,9 @@ async def criar_usuario_comum(usuario_comum: Usuario_comum, session: Session):
         },
         session,
     )
-    # usuario_comum_bd = await session.scalar(
-    #     select(Usuario_comum).where(Usuario_comum.nome == usuario_comum.nome)
-    # )
+    usuario_comum_bd = await session.scalar(
+        select(Usuario_comum).where(Usuario_comum.nome == usuario_comum.nome)
+    )
 
     if usuario:
         raise HTTPException(

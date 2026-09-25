@@ -42,5 +42,4 @@ app.include_router(usuarios_comuns.router)
 app.include_router(eventos.router)
 app.include_router(categorias.router)
 app.include_router(unidades_saude.router)
-
 app.include_router(fotografias.router)
