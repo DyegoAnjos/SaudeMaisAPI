@@ -4,6 +4,7 @@ from typing import Annotated
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
+from usuario import validar
 
 from saudemaisapi.database import get_db
 from saudemaisapi.models import Usuario_comum
@@ -64,24 +65,31 @@ async def listar_usuario_comum_por_id(id_comum: int, session: Session):
     response_model=Usuario_comum_retorno_Schema,
 )
 async def criar_usuario_comum(usuario_comum: Usuario_comum, session: Session):
-    usuario_comum_bd = await session.scalar(
-        select(Usuario_comum).where(Usuario_comum.nome == usuario_comum.nome)
+    usuario = await validar(
+        {
+            'email': usuario_comum.email,
+            'senha': usuario_comum.senha,
+        },
+        session,
     )
+    # usuario_comum_bd = await session.scalar(
+    #     select(Usuario_comum).where(Usuario_comum.nome == usuario_comum.nome)
+    # )
 
-    if usuario_comum_bd:
+    if usuario:
         raise HTTPException(
             status_code=HTTPStatus.CONFLICT,
             detail='Usuário já existe!',
         )
 
-    usuario_comum_bd = Usuario_comum(**usuario_comum.model_dump())
+    usuario = Usuario_comum(**usuario_comum.model_dump())
 
-    session.add(usuario_comum_bd)
+    session.add(usuario)
     await session.commit()
 
-    await session.refresh(usuario_comum_bd)
+    await session.refresh(usuario)
 
-    return usuario_comum_bd
+    return usuario
 
 
 # PUT

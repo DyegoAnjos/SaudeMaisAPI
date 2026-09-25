@@ -50,3 +50,16 @@ def teste_validar_usuario_administrador(client, usuario_administrador):
         'id': usuario_administrador.id,
         'tipo': 'Usuario_administrador',
     }
+
+
+def teste_validar_usuario_nao_encontrado(client):
+    resposta = client.post(
+        '/usuarios/validar',
+        json={
+            'email': 'nao_encontrado@gmail.com',
+            'senha': '123456',
+        },
+    )
+
+    assert resposta.status_code == HTTPStatus.NOT_FOUND
+    assert resposta.json() == {'detail': 'Usuário não encontrado'}
