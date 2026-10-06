@@ -8,7 +8,9 @@ from saudemaisapi.routers import (
     eventos,
     fotografias,
     unidades_saude,
+    usuarios_administradores,
     usuarios_comuns,
+    usuarios_institucionais,
 )
 
 app = FastAPI(title='Saude+API')
@@ -40,4 +42,6 @@ app.include_router(eventos.router)
 app.include_router(categorias.router)
 app.include_router(unidades_saude.router)
 app.include_router(usuarios_comuns.router)
+app.include_router(usuarios_institucionais.router)
+app.include_router(usuarios_administradores.router)
 app.include_router(fotografias.router)

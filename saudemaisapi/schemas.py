@@ -16,7 +16,7 @@ class UsuarioSchema(BaseModel):
 
 
 class Usuario_adiministrador_Schema(UsuarioSchema):
-    telefone: str
+    telefone: str | None = None
 
 
 class Usuario_comum_Schema(Usuario_adiministrador_Schema):
@@ -28,8 +28,13 @@ class Usuario_comum_Schema(Usuario_adiministrador_Schema):
 class Usuario_Schema_institucional_Schema(UsuarioSchema):
     cnpj: str
     vinculo_instituicao: str
-    descricao: str
-    endereco: str
+    razao_social: str
+    nome_responsavel: str
+    cargo_responsavel: str
+    site: str | None = None
+    telefone: str | None = None
+    descricao: str | None = None
+    endereco: str | None = None
 
 
 class Usuario_retorno_Schema(UsuarioSchema):
@@ -47,17 +52,32 @@ class Usuario_comum_lista_Schema(Usuario_comum_retorno_Schema):
     usuarios: list[Usuario_comum_retorno_Schema]
 
 
-class Usuario_administrador_retorno_Schema(Usuario_adiministrador_Schema):
+class Usuario_administrador_retorno_Schema(BaseModel):
     model_config = ConfigDict(from_attributes=True)
     id: int
+    email: str
+    nome: str
+    telefone: str | None = None
 
 
-class Usuario_institucional_retorno_Schema(
-    Usuario_Schema_institucional_Schema
-):
+class Usuario_institucional_retorno_Schema(BaseModel):
     model_config = ConfigDict(from_attributes=True)
     id: int
+    email: str
+    nome: str
+    cnpj: str
+    vinculo_instituicao: str
+    razao_social: str | None = None
+    nome_responsavel: str | None = None
+    cargo_responsavel: str | None = None
+    site: str | None = None
     status: str = 'Pendente'
+    telefone: str | None = None
+    descricao: str | None = None
+    endereco: str | None = None
+    documento_cnpj: str | None = None
+    documento_responsavel: str | None = None
+    documento_vinculo: str | None = None
 
 
 class Sugestao_Schema(BaseModel):
