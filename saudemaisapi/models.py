@@ -72,6 +72,13 @@ class Usuario_institucional:
 
     descricao: Mapped[str | None] = mapped_column(default=None)
     endereco: Mapped[str | None] = mapped_column(default=None)
+    razao_social: Mapped[str | None] = mapped_column(default=None)
+    nome_responsavel: Mapped[str | None] = mapped_column(default=None)
+    cargo_responsavel: Mapped[str | None] = mapped_column(default=None)
+    site: Mapped[str | None] = mapped_column(default=None)
+    documento_cnpj: Mapped[str | None] = mapped_column(default=None)
+    documento_responsavel: Mapped[str | None] = mapped_column(default=None)
+    documento_vinculo: Mapped[str | None] = mapped_column(default=None)
 
 
 @mapped_as_dataclass(registrador_tabela)
