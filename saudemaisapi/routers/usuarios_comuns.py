@@ -5,7 +5,6 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-
 from saudemaisapi.database import get_db
 from saudemaisapi.models import Usuario_comum
 from saudemaisapi.schemas import (
@@ -65,14 +64,7 @@ async def listar_usuario_comum_por_id(id_comum: int, session: Session):
     response_model=Usuario_comum_retorno_Schema,
 )
 async def criar_usuario_comum(usuario_comum: Usuario_comum, session: Session):
-    usuario = await validar(
-        {
-            'email': usuario_comum.email,
-            'senha': usuario_comum.senha,
-        },
-        session,
-    )
-    usuario_comum_bd = await session.scalar(
+    usuario = await session.scalar(
         select(Usuario_comum).where(Usuario_comum.nome == usuario_comum.nome)
     )
 

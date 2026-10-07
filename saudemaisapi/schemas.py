@@ -224,3 +224,16 @@ class Login_retorno_Schema(BaseModel):
     model_config = {'from_attributes': True}
     id: int
     tipo: str
+
+
+class Inscricao_Schema(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+    id: int
+    id_evento: int
+    id_usuario: int
+
+
+class Inscrever_Schema(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+    id_evento: int
+    id_usuario: int

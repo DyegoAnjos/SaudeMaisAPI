@@ -14,6 +14,7 @@ from saudemaisapi.models import (
     Comentario,
     Evento,
     Fotografias,
+    Inscricao,
     Sugestao,
     Unidade_saude,
     Usuario_administrador,
@@ -272,3 +273,25 @@ async def fotografia_de_usuario(
     await session.refresh(fotografias)
 
     return fotografias
+
+
+@pytest_asyncio.fixture
+async def inscricao_evento1(session):
+    inscricao = Inscricao(usuario=1, evento=1)
+
+    session.add(inscricao)
+    await session.commit()
+    await session.refresh(inscricao)
+
+    return inscricao
+
+
+@pytest_asyncio.fixture
+async def inscricao_evento2(session):
+    inscricao = Inscricao(usuario=1, evento=2)
+
+    session.add(inscricao)
+    await session.commit()
+    await session.refresh(inscricao)
+
+    return inscricao
