@@ -22,9 +22,7 @@ def dados_institucional():
 
 
 def test_crud_usuario_institucional(client, tmp_path, monkeypatch):
-    monkeypatch.setattr(
-        usuarios_institucionais, 'PASTA_DOCUMENTOS', tmp_path
-    )
+    monkeypatch.setattr(usuarios_institucionais, 'PASTA_DOCUMENTOS', tmp_path)
     dados = dados_institucional()
 
     resposta = client.post(

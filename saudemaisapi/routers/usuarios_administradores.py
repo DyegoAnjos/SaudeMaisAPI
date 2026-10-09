@@ -30,9 +30,7 @@ async def listar_usuarios_administradores(
     session: Session, filtro: Annotated[Filtro_Paginas, Query()]
 ):
     usuarios = await session.scalars(
-        select(Usuario_administrador)
-        .limit(filtro.limit)
-        .offset(filtro.offset)
+        select(Usuario_administrador).limit(filtro.limit).offset(filtro.offset)
     )
     return usuarios
 

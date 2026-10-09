@@ -20,11 +20,9 @@ Session = Annotated[AsyncSession, Depends(get_db)]
 
 
 # UTIL
-async def validar_inscricao(Inscricao: Inscricao_Schema, session: Session):
+async def validar_inscricao(inscricao: Inscricao_Schema, session: Session):
     usuario_db = await session.scalar(
-        select(Usuario_comum).where(
-            Usuario_comum.id == Inscrever_Schema.id_usuario
-        )
+        select(Usuario_comum).where(Usuario_comum.id == inscricao.usuario)
     )
 
     if not usuario_db:
@@ -33,7 +31,7 @@ async def validar_inscricao(Inscricao: Inscricao_Schema, session: Session):
         )
 
     evento_db = await session.scalar(
-        select(Evento).wherer(Evento.id == Inscrever_Schema.id_evento)
+        select(Evento).where(Evento.id == inscricao.evento)
     )
 
     if not evento_db:
@@ -50,7 +48,7 @@ async def validar_inscricao(Inscricao: Inscricao_Schema, session: Session):
     status_code=HTTPStatus.OK,
     response_model=list[Inscricao_Schema],
 )
-async def listar_inscircoes(
+async def listar_inscricoes(
     id_usuario: int,
     session: Session,
     filtro: Annotated[Filtro_Paginas, Query()],
@@ -63,6 +61,12 @@ async def listar_inscircoes(
             .offset(filtro.offset)
         )
     ).all()
+
+    if not inscricoes:
+        raise HTTPException(
+            status_code=HTTPStatus.NOT_FOUND,
+            detail='Usuário sem inscrição!',
+        )
 
     return inscricoes
 
@@ -102,16 +106,13 @@ async def inscrever(inscricao: Inscrever_Schema, session: Session):
 
 
 @router.delete(
-    '/cancelar_inscricao',
+    '/cancelar_inscricao/{id_inscricao}',
     status_code=HTTPStatus.OK,
     response_model=MessageSchema,
 )
-async def cancelar_inscricao(inscricao: Inscrever_Schema, session: Session):
+async def cancelar_inscricao(id_inscricao: int, session: Session):
     inscricao_db = await session.scalar(
-        select(Inscricao).where(
-            Inscricao.usuario == inscricao.id_usuario,
-            Inscricao.evento == inscricao.id_evento,
-        )
+        select(Inscricao).where(Inscricao.id == id_inscricao)
     )
 
     if not inscricao_db:

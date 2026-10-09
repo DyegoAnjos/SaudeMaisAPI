@@ -68,9 +68,7 @@ async def listar_usuarios_institucionais(
     session: Session, filtro: Annotated[Filtro_Paginas, Query()]
 ):
     usuarios = await session.scalars(
-        select(Usuario_institucional)
-        .limit(filtro.limit)
-        .offset(filtro.offset)
+        select(Usuario_institucional).limit(filtro.limit).offset(filtro.offset)
     )
     return usuarios
 
@@ -129,9 +127,7 @@ async def enviar_documentos_institucionais(
     id_usuario: int,
     session: Session,
     documento_cnpj: Annotated[UploadFile, File(alias='docCnpj')],
-    documento_responsavel: Annotated[
-        UploadFile, File(alias='docResponsavel')
-    ],
+    documento_responsavel: Annotated[UploadFile, File(alias='docResponsavel')],
     documento_vinculo: Annotated[
         UploadFile | None, File(alias='docVinculo')
     ] = None,
