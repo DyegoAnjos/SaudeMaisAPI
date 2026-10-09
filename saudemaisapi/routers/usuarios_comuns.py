@@ -11,7 +11,7 @@ from saudemaisapi.schemas import (
     Filtro_Paginas,
     MessageSchema,
     Usuario_comum_retorno_Schema,
-    Usuario_comum_Schema
+    Usuario_comum_Schema,
 )
 
 router = APIRouter(prefix='/usuarios/comum', tags=['Usuarios comuns'])
@@ -64,7 +64,9 @@ async def listar_usuario_comum_por_id(id_comum: int, session: Session):
     status_code=HTTPStatus.CREATED,
     response_model=Usuario_comum_retorno_Schema,
 )
-async def criar_usuario_comum(usuario_comum: Usuario_comum_Schema, session: Session):
+async def criar_usuario_comum(
+    usuario_comum: Usuario_comum_Schema, session: Session
+):
     usuario = await session.scalar(
         select(Usuario_comum).where(Usuario_comum.nome == usuario_comum.nome)
     )
