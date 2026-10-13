@@ -25,32 +25,50 @@ Session = Annotated[AsyncSession, Depends(get_db)]
 
 
 async def preparar_evento(evento: Evento, session: Session, request: Request):
-    dados = Evento_retorno_Schema.model_validate(evento).model_dump()
-
-    # 1. Busca a categoria relacionada
+    # 1. Busca a categoria para obter o nome
     categoria = await session.get(Categoria, evento.categoria)
+    nome_categoria = categoria.nome if categoria else None
 
-    # 2. CONTAGEM DINÂMICA: Conta quantas inscrições existem para esse evento
+    # 2. SELECT DIRETO: Conta quantas inscrições existem para este evento específico
     stmt_count = (
-        select(func.count())
-        .select_from(Inscricao)
+        select(func.count(Inscricao.id))
         .where(Inscricao.evento == evento.id)
     )
     total_inscritos = await session.scalar(stmt_count) or 0
 
-    # 3. Preenche os campos calculados/formatados
-    dados['inscricoes_atuais'] = total_inscritos
-    dados['numero_participantes'] = total_inscritos  # 👈 Agora reflete o total real
+    # 3. Cria o dicionário com todos os dados do evento + campos calculados
+    dados = {
+        'id': evento.id,
+        'titulo': evento.titulo,
+        'descricao': evento.descricao,
+        'data_hora_evento': evento.data_hora_evento,
+        'data_hora_fim': evento.data_hora_fim,
+        'publico_alvo': evento.publico_alvo,
+        'categoria': evento.categoria,
+        'foto_evento': evento.foto_evento,
+        'criador_institucional': evento.criador_institucional,
+        'status': evento.status,
+        'capacidade_maxima': evento.capacidade_maxima,
+        'unidade_associada': evento.unidade_associada,
+        'endereco': evento.endereco,
+        'pagina_evento': evento.pagina_evento,
+        'data_hora_criacao': evento.data_hora_criacao,
+        'data_hora_cancelamento': evento.data_hora_cancelamento,
+        'data_hora_ultima_atualizacao': evento.data_hora_ultima_atualizacao,
 
-    dados['foto_capa'] = str(
-        request.url_for('obter_arquivo', id_fotografia=evento.foto_evento)
-    )
-    dados['data'] = evento.data_hora_evento.date().isoformat()
-    dados['data_exibicao'] = evento.data_hora_evento.strftime('%d/%m/%Y')
-    dados['localizacao'] = evento.endereco
-    dados['categoria_nome'] = categoria.nome if categoria else None
+        # ➕ CAMPOS DINÂMICOS
+        'inscricoes_atuais': total_inscritos,
+        'numero_participantes': total_inscritos,
+        'categoria_nome': nome_categoria,
+        'foto_capa': str(request.url_for('obter_arquivo', id_fotografia=evento.foto_evento)),
+        'data': evento.data_hora_evento.date().isoformat(),
+        'data_exibicao': evento.data_hora_evento.strftime('%d/%m/%Y'),
+        'localizacao': evento.endereco,
+        'comentarios': [],
+    }
 
-    return dados
+    # 4. Retorna o schema validado pelo Pydantic
+    return Evento_retorno_Schema.model_validate(dados)
 
 # GET
 
