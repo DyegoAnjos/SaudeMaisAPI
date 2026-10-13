@@ -204,9 +204,7 @@ class Evento_retorno_Schema(Evento_Schema):
     model_config = ConfigDict(from_attributes=True)
 
     id: int
-    inscricoes_atuais: int = 0
-
-    status: str
+    status: str = 'Pendente'
 
     data_hora_criacao: datetime
     data_hora_cancelamento: datetime | None = None
@@ -214,13 +212,16 @@ class Evento_retorno_Schema(Evento_Schema):
 
     comentarios: list[Comentario_retorno_Schema] = Field(default_factory=list)
 
+    # ➕ Defina default=0 para garantir que não haja erros de conversão do Pydantic
+    inscricoes_atuais: int = 0
+    numero_participantes: int = 0
+
     foto_capa: str | None = None
     data: str | None = None
     data_exibicao: str | None = Field(
         default=None, serialization_alias='dataExibicao'
     )
     localizacao: str | None = None
-    numero_participantes: int = 0
     categoria_nome: str | None = None
     regiao: str | None = None
 

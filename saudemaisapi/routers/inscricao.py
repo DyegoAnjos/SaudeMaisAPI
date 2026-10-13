@@ -2,7 +2,7 @@ from http import HTTPStatus
 from typing import Annotated
 
 from fastapi import APIRouter, Depends, HTTPException, Query
-from sqlalchemy import select
+from sqlalchemy import select, cast, Integer, func
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from saudemaisapi.database import get_db
@@ -78,11 +78,14 @@ async def listar_inscricoes(
 async def inscrever(inscricao: Inscrever_Schema, session: Session):
     await validar_inscricao(inscricao, session)
 
-    # Checa se já existe inscrição desse usuário neste evento
+    # Força a checagem com valores inteiros
+    id_usuario = int(inscricao.usuario)
+    id_evento = int(inscricao.evento)
+
     inscricao_db = await session.scalar(
         select(Inscricao).where(
-            Inscricao.usuario == inscricao.usuario,
-            Inscricao.evento == inscricao.evento,
+            cast(Inscricao.usuario, Integer) == id_usuario,
+            cast(Inscricao.evento, Integer) == id_evento,
         )
     )
 
@@ -91,10 +94,10 @@ async def inscrever(inscricao: Inscrever_Schema, session: Session):
             status_code=HTTPStatus.CONFLICT, detail='Usuário já inscrito!'
         )
 
-    # Cria e salva o registro
+    # Cria garantindo os tipos int
     nova_inscricao = Inscricao(
-        usuario=inscricao.usuario,
-        evento=inscricao.evento,
+        usuario=id_usuario,
+        evento=id_evento,
     )
 
     session.add(nova_inscricao)

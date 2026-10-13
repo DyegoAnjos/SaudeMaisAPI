@@ -2,7 +2,7 @@ from http import HTTPStatus
 from typing import Annotated
 
 from fastapi import APIRouter, Depends, HTTPException, Query, Request
-from sqlalchemy import select, func
+from sqlalchemy import Integer, cast, func, or_, select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -25,20 +25,29 @@ Session = Annotated[AsyncSession, Depends(get_db)]
 
 
 async def preparar_evento(evento: Evento, session: Session, request: Request):
-    # 1. Busca a categoria para obter o nome
+    # 1. Categoria
     categoria = await session.get(Categoria, evento.categoria)
     nome_categoria = categoria.nome if categoria else None
 
-    # 2. SELECT DIRETO: Conta quantas inscrições existem para este evento específico
+    # 2. CONTAGEM ROBUSTA
+    # Converte id para inteiro garantido
+    id_ev = int(evento.id)
+
+    # Busca contando qualquer inscricao associada ao ID do evento
     stmt_count = (
         select(func.count(Inscricao.id))
-        .where(Inscricao.evento == evento.id)
+        .where(
+            or_(
+                cast(Inscricao.evento, Integer) == id_ev,
+                Inscricao.evento == id_ev
+            )
+        )
     )
     total_inscritos = await session.scalar(stmt_count) or 0
 
-    # 3. Cria o dicionário com todos os dados do evento + campos calculados
+    # 3. Construção explícita do dicionário
     dados = {
-        'id': evento.id,
+        'id': int(evento.id),
         'titulo': evento.titulo,
         'descricao': evento.descricao,
         'data_hora_evento': evento.data_hora_evento,
@@ -56,9 +65,9 @@ async def preparar_evento(evento: Evento, session: Session, request: Request):
         'data_hora_cancelamento': evento.data_hora_cancelamento,
         'data_hora_ultima_atualizacao': evento.data_hora_ultima_atualizacao,
 
-        # ➕ CAMPOS DINÂMICOS
-        'inscricoes_atuais': total_inscritos,
-        'numero_participantes': total_inscritos,
+        # Injeção direta dos valores calculados
+        'inscricoes_atuais': int(total_inscritos),
+        'numero_participantes': int(total_inscritos),
         'categoria_nome': nome_categoria,
         'foto_capa': str(request.url_for('obter_arquivo', id_fotografia=evento.foto_evento)),
         'data': evento.data_hora_evento.date().isoformat(),
@@ -67,25 +76,10 @@ async def preparar_evento(evento: Evento, session: Session, request: Request):
         'comentarios': [],
     }
 
-    # 4. Retorna o schema validado pelo Pydantic
+    # 4. Validação Pydantic
     return Evento_retorno_Schema.model_validate(dados)
 
 # GET
-
-
-async def preparar_evento(evento: Evento, session: Session, request: Request):
-    dados = Evento_retorno_Schema.model_validate(evento).model_dump()
-    categoria = await session.get(Categoria, evento.categoria)
-    dados['foto_capa'] = str(
-        request.url_for('obter_arquivo', id_fotografia=evento.foto_evento)
-    )
-    dados['data'] = evento.data_hora_evento.date().isoformat()
-    dados['data_exibicao'] = evento.data_hora_evento.strftime('%d/%m/%Y')
-    dados['localizacao'] = evento.endereco
-    dados['numero_participantes'] = dados['inscricoes_atuais']
-    dados['categoria_nome'] = categoria.nome if categoria else None
-    return dados
-
 
 @router.get(
     '/', status_code=HTTPStatus.OK, response_model=list[Evento_retorno_Schema]
