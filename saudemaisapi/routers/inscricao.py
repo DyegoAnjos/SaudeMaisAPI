@@ -2,7 +2,7 @@ from http import HTTPStatus
 from typing import Annotated
 
 from fastapi import APIRouter, Depends, HTTPException, Query
-from sqlalchemy import select
+from sqlalchemy import select, update, func
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from saudemaisapi.database import get_db
@@ -40,6 +40,27 @@ async def validar_inscricao(inscricao: Inscricao_Schema, session: Session):
         )
 
 
+async def atualizar_inscricao_evento(inscricao: Inscricao_Schema, session: Session):
+    # 1. Conta quantas inscrições existem para este evento específico
+    stmt_count = (
+        select(func.count())
+        .select_from(Inscricao)
+        .where(Inscricao.evento == inscricao.id_evento) # 👈 Nome da coluna de evento na tabela Inscricao
+    )
+    total_inscricoes = await session.scalar(stmt_count) or 0
+
+    # 2. Atualiza a contagem na tabela Evento
+    stmt_update = (
+        update(Evento)
+        .where(Evento.id == inscricao.id_evento)
+        .values(quantidade_inscricoes=total_inscricoes) # 👈 Substitua pelo nome exato da coluna na tabela Evento
+    )
+
+    await session.execute(stmt_update)
+    await session.commit()
+
+    return total_inscricoes
+
 # GET
 
 
@@ -67,6 +88,7 @@ async def listar_inscricoes(
             status_code=HTTPStatus.NOT_FOUND,
             detail='Usuário sem inscrição!',
         )
+
 
     return inscricoes
 
@@ -99,6 +121,8 @@ async def inscrever(inscricao: Inscrever_Schema, session: Session):
 
     await session.refresh(inscricao_db)
 
+    await atualizar_inscricao_evento(Inscrever_Schema, session)
+
     return inscricao_db
 
 
@@ -123,5 +147,7 @@ async def cancelar_inscricao(id_inscricao: int, session: Session):
 
     session.delete(inscricao_db)
     await session.commit()
+
+    await atualizar_inscricao_evento(Inscrever_Schema, session)
 
     return {'mensagem': 'Inscrição cancelada no evento!'}

@@ -2,12 +2,16 @@ from http import HTTPStatus
 from typing import Annotated
 
 from fastapi import APIRouter, Depends, HTTPException, Query, Request
-from sqlalchemy import select
+from sqlalchemy import select, func
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from saudemaisapi.database import get_db
-from saudemaisapi.models import Categoria, Evento
+from saudemaisapi.models import (
+    Categoria,
+    Evento,
+    Inscricao
+)
 from saudemaisapi.schemas import (
     Evento_retorno_Schema,
     Evento_Schema,
@@ -18,6 +22,35 @@ from saudemaisapi.schemas import (
 router = APIRouter(prefix='/eventos', tags=['Eventos'])
 
 Session = Annotated[AsyncSession, Depends(get_db)]
+
+
+async def preparar_evento(evento: Evento, session: Session, request: Request):
+    dados = Evento_retorno_Schema.model_validate(evento).model_dump()
+
+    # 1. Busca a categoria relacionada
+    categoria = await session.get(Categoria, evento.categoria)
+
+    # 2. CONTAGEM DINÂMICA: Conta quantas inscrições existem para esse evento
+    stmt_count = (
+        select(func.count())
+        .select_from(Inscricao)
+        .where(Inscricao.evento == evento.id)
+    )
+    total_inscritos = await session.scalar(stmt_count) or 0
+
+    # 3. Preenche os campos calculados/formatados
+    dados['inscricoes_atuais'] = total_inscritos
+    dados['numero_participantes'] = total_inscritos  # 👈 Agora reflete o total real
+
+    dados['foto_capa'] = str(
+        request.url_for('obter_arquivo', id_fotografia=evento.foto_evento)
+    )
+    dados['data'] = evento.data_hora_evento.date().isoformat()
+    dados['data_exibicao'] = evento.data_hora_evento.strftime('%d/%m/%Y')
+    dados['localizacao'] = evento.endereco
+    dados['categoria_nome'] = categoria.nome if categoria else None
+
+    return dados
 
 # GET
 
