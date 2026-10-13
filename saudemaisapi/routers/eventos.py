@@ -67,7 +67,6 @@ async def preparar_evento(evento: Evento, session: Session, request: Request):
 
         # Injeção direta dos valores calculados
         'inscricoes_atuais': int(total_inscritos),
-        'numero_participantes': int(total_inscritos),
         'categoria_nome': nome_categoria,
         'foto_capa': str(request.url_for('obter_arquivo', id_fotografia=evento.foto_evento)),
         'data': evento.data_hora_evento.date().isoformat(),
