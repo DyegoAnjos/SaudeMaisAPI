@@ -5,6 +5,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from saudemaisapi.routers import (
     categorias,
+    comentarios,
     eventos,
     fotografias,
     inscricao,
@@ -44,6 +45,7 @@ app.include_router(usuario.router)
 app.include_router(usuarios_comuns.router)
 app.include_router(eventos.router)
 app.include_router(categorias.router)
+app.include_router(comentarios.router)
 app.include_router(unidades_saude.router)
 app.include_router(usuarios_comuns.router)
 app.include_router(usuarios_institucionais.router)

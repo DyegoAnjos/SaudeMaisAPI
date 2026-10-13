@@ -117,6 +117,9 @@ class Comentario:
     evento: Mapped[int] = mapped_column(ForeignKey('evento.id'))
 
     nota: Mapped[int] = mapped_column(default=0)
+    comentario_pai: Mapped[int | None] = mapped_column(
+        ForeignKey('comentario.id'), default=None
+    )
 
 
 @mapped_as_dataclass(registrador_tabela)

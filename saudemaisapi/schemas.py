@@ -95,19 +95,22 @@ class Sugestao_retorno_Schema(Sugestao_Schema):
 
 class Comentario_Schema(BaseModel):
     nota: int = Field(ge=0, le=5)
-    titulo: str = Field(min_length=1)
-    conteudo: str = Field(min_length=1)
+    titulo: str = Field(min_length=1, max_length=100)
+    conteudo: str = Field(min_length=1, max_length=1000)
 
     usuario: int
     evento: int
+    comentario_pai: int | None = None
 
 
 class Comentario_retorno_Schema(Comentario_Schema):
     model_config = ConfigDict(from_attributes=True)
-    # Garante compatibilidade ORM
     id: int
-
     data_hora_feito: datetime
+    nome_usuario: str
+    respostas: list['Comentario_retorno_Schema'] = Field(
+        default_factory=list
+    )
 
 
 class Inscricao_Schema(BaseModel):

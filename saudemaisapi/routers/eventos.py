@@ -7,7 +7,8 @@ from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from saudemaisapi.database import get_db
-from saudemaisapi.models import Categoria, Evento
+from saudemaisapi.models import Categoria, Comentario, Evento
+from saudemaisapi.routers.comentarios import preparar_comentario
 from saudemaisapi.schemas import (
     Evento_retorno_Schema,
     Evento_Schema,
@@ -25,6 +26,14 @@ Session = Annotated[AsyncSession, Depends(get_db)]
 async def preparar_evento(evento: Evento, session: Session, request: Request):
     dados = Evento_retorno_Schema.model_validate(evento).model_dump()
     categoria = await session.get(Categoria, evento.categoria)
+    comentarios = await session.scalars(
+        select(Comentario)
+        .where(
+            Comentario.evento == evento.id,
+            Comentario.comentario_pai.is_(None),
+        )
+        .order_by(Comentario.data_hora_feito.desc())
+    )
     dados['foto_capa'] = str(
         request.url_for('obter_arquivo', id_fotografia=evento.foto_evento)
     )
@@ -33,6 +42,10 @@ async def preparar_evento(evento: Evento, session: Session, request: Request):
     dados['localizacao'] = evento.endereco
     dados['numero_participantes'] = dados['inscricoes_atuais']
     dados['categoria_nome'] = categoria.nome if categoria else None
+    dados['comentarios'] = [
+        await preparar_comentario(comentario, session)
+        for comentario in comentarios.all()
+    ]
     return dados
 
 
