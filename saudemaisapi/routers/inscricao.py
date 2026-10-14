@@ -2,7 +2,7 @@ from http import HTTPStatus
 from typing import Annotated
 
 from fastapi import APIRouter, Depends, HTTPException, Query
-from sqlalchemy import select, cast, Integer, func
+from sqlalchemy import Integer, cast, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from saudemaisapi.database import get_db

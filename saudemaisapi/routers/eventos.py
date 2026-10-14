@@ -7,11 +7,7 @@ from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from saudemaisapi.database import get_db
-from saudemaisapi.models import (
-    Categoria,
-    Evento,
-    Inscricao
-)
+from saudemaisapi.models import Categoria, Evento, Inscricao
 from saudemaisapi.schemas import (
     Evento_retorno_Schema,
     Evento_Schema,
@@ -34,13 +30,9 @@ async def preparar_evento(evento: Evento, session: Session, request: Request):
     id_ev = int(evento.id)
 
     # Busca contando qualquer inscricao associada ao ID do evento
-    stmt_count = (
-        select(func.count(Inscricao.id))
-        .where(
-            or_(
-                cast(Inscricao.evento, Integer) == id_ev,
-                Inscricao.evento == id_ev
-            )
+    stmt_count = select(func.count(Inscricao.id)).where(
+        or_(
+            cast(Inscricao.evento, Integer) == id_ev, Inscricao.evento == id_ev
         )
     )
     total_inscritos = await session.scalar(stmt_count) or 0
@@ -64,11 +56,12 @@ async def preparar_evento(evento: Evento, session: Session, request: Request):
         'data_hora_criacao': evento.data_hora_criacao,
         'data_hora_cancelamento': evento.data_hora_cancelamento,
         'data_hora_ultima_atualizacao': evento.data_hora_ultima_atualizacao,
-
         # Injeção direta dos valores calculados
         'inscricoes_atuais': int(total_inscritos),
         'categoria_nome': nome_categoria,
-        'foto_capa': str(request.url_for('obter_arquivo', id_fotografia=evento.foto_evento)),
+        'foto_capa': str(
+            request.url_for('obter_arquivo', id_fotografia=evento.foto_evento)
+        ),
         'data': evento.data_hora_evento.date().isoformat(),
         'data_exibicao': evento.data_hora_evento.strftime('%d/%m/%Y'),
         'localizacao': evento.endereco,
@@ -78,7 +71,9 @@ async def preparar_evento(evento: Evento, session: Session, request: Request):
     # 4. Validação Pydantic
     return Evento_retorno_Schema.model_validate(dados)
 
+
 # GET
+
 
 @router.get(
     '/', status_code=HTTPStatus.OK, response_model=list[Evento_retorno_Schema]

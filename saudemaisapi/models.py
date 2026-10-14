@@ -215,11 +215,12 @@ class Evento:
     )
     pagina_evento: Mapped[str | None] = mapped_column(default=None)
 
-
+@mapped_as_dataclass(registrador_tabela)
 class Bairro:
     __tablename__ = 'bairros'
     id: Mapped[int] = mapped_column(
         init=False, primary_key=True, autoincrement='auto'
     )
-    area_programatica: Mapped[float] = mapped_column(default=0)
     nome: Mapped[str] = mapped_column(unique=True)
+    area_programatica: Mapped[float] = mapped_column(default=0)
+

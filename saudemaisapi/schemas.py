@@ -212,7 +212,6 @@ class Evento_retorno_Schema(Evento_Schema):
 
     comentarios: list[Comentario_retorno_Schema] = Field(default_factory=list)
 
-    # ➕ Defina default=0 para garantir que não haja erros de conversão do Pydantic
     inscricoes_atuais: int = 0
     numero_participantes: int = 0
 
