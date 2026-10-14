@@ -7,7 +7,8 @@ from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from saudemaisapi.database import get_db
-from saudemaisapi.models import Categoria, Evento, Inscricao
+from saudemaisapi.models import Categoria, Evento, Inscricao, Comentario
+from saudemaisapi.routers.comentarios import preparar_comentario
 from saudemaisapi.schemas import (
     Evento_retorno_Schema,
     Evento_Schema,
@@ -25,19 +26,31 @@ async def preparar_evento(evento: Evento, session: Session, request: Request):
     categoria = await session.get(Categoria, evento.categoria)
     nome_categoria = categoria.nome if categoria else None
 
-    # 2. CONTAGEM ROBUSTA
-    # Converte id para inteiro garantido
+    # 2. Contagem Robusta de Inscrições
     id_ev = int(evento.id)
-
-    # Busca contando qualquer inscricao associada ao ID do evento
     stmt_count = select(func.count(Inscricao.id)).where(
         or_(
-            cast(Inscricao.evento, Integer) == id_ev, Inscricao.evento == id_ev
+            cast(Inscricao.evento, Integer) == id_ev,
+            Inscricao.evento == id_ev,
         )
     )
     total_inscritos = await session.scalar(stmt_count) or 0
 
-    # 3. Construção explícita do dicionário
+    # 3. Busca de Comentarios Principais (emanuelle-api)
+    comentarios_db = await session.scalars(
+        select(Comentario)
+        .where(
+            Comentario.evento == evento.id,
+            Comentario.comentario_pai.is_(None),
+        )
+        .order_by(Comentario.data_hora_feito.desc())
+    )
+    comentarios_formatados = [
+        await preparar_comentario(comentario, session)
+        for comentario in comentarios_db.all()
+    ]
+
+    # 4. Construção explícita do dicionário
     dados = {
         'id': int(evento.id),
         'titulo': evento.titulo,
@@ -56,8 +69,10 @@ async def preparar_evento(evento: Evento, session: Session, request: Request):
         'data_hora_criacao': evento.data_hora_criacao,
         'data_hora_cancelamento': evento.data_hora_cancelamento,
         'data_hora_ultima_atualizacao': evento.data_hora_ultima_atualizacao,
-        # Injeção direta dos valores calculados
+        
+        # Injeção das inscrições calculadas
         'inscricoes_atuais': int(total_inscritos),
+        'numero_participantes': int(total_inscritos),
         'categoria_nome': nome_categoria,
         'foto_capa': str(
             request.url_for('obter_arquivo', id_fotografia=evento.foto_evento)
@@ -65,14 +80,37 @@ async def preparar_evento(evento: Evento, session: Session, request: Request):
         'data': evento.data_hora_evento.date().isoformat(),
         'data_exibicao': evento.data_hora_evento.strftime('%d/%m/%Y'),
         'localizacao': evento.endereco,
-        'comentarios': [],
+        
+        # Injeção da lista de comentários processados
+        'comentarios': comentarios_formatados,
     }
 
-    # 4. Validação Pydantic
+    # 5. Validação com Pydantic
     return Evento_retorno_Schema.model_validate(dados)
 
 
 # GET
+    comentarios = await session.scalars(
+        select(Comentario)
+        .where(
+            Comentario.evento == evento.id,
+            Comentario.comentario_pai.is_(None),
+        )
+        .order_by(Comentario.data_hora_feito.desc())
+    )
+    dados['foto_capa'] = str(
+        request.url_for('obter_arquivo', id_fotografia=evento.foto_evento)
+    )
+    dados['data'] = evento.data_hora_evento.date().isoformat()
+    dados['data_exibicao'] = evento.data_hora_evento.strftime('%d/%m/%Y')
+    dados['localizacao'] = evento.endereco
+    dados['numero_participantes'] = dados['inscricoes_atuais']
+    dados['categoria_nome'] = categoria.nome if categoria else None
+    dados['comentarios'] = [
+        await preparar_comentario(comentario, session)
+        for comentario in comentarios.all()
+    ]
+    return dados
 
 
 @router.get(
