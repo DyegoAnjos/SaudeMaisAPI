@@ -19,9 +19,7 @@ router = APIRouter(prefix='/comentarios', tags=['Comentários'])
 Session = Annotated[AsyncSession, Depends(get_db)]
 
 
-async def validar_usuario_evento(
-    dados: Comentario_Schema, session: Session
-):
+async def validar_usuario_evento(dados: Comentario_Schema, session: Session):
     usuario = await session.get(Usuario_comum, dados.usuario)
     if not usuario:
         raise HTTPException(
@@ -55,9 +53,7 @@ async def validar_usuario_evento(
             )
 
 
-async def preparar_comentario(
-    comentario: Comentario, session: Session
-):
+async def preparar_comentario(comentario: Comentario, session: Session):
     usuario = await session.get(Usuario_comum, comentario.usuario)
     respostas = await session.scalars(
         select(Comentario)
@@ -77,9 +73,7 @@ async def preparar_comentario(
         'respostas': [],
     }
     for resposta in respostas.all():
-        dados['respostas'].append(
-            await preparar_comentario(resposta, session)
-        )
+        dados['respostas'].append(await preparar_comentario(resposta, session))
     return dados
 
 

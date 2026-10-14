@@ -102,9 +102,7 @@ def test_comentario_fica_no_evento_correto(client, evento, usuario_comum):
 
 
 def test_resposta_ao_comentario(client, evento, usuario_comum):
-    comentario = client.post(
-        '/comentarios/', json=dados_comentario()
-    ).json()
+    comentario = client.post('/comentarios/', json=dados_comentario()).json()
     dados_resposta = {
         **dados_comentario(),
         'titulo': 'Resposta',
@@ -154,9 +152,7 @@ def test_rejeita_resposta_em_outro_evento(client, evento, usuario_comum):
 
 
 def test_rejeita_resposta_de_outra_resposta(client, evento, usuario_comum):
-    comentario = client.post(
-        '/comentarios/', json=dados_comentario()
-    ).json()
+    comentario = client.post('/comentarios/', json=dados_comentario()).json()
     primeira_resposta = client.post(
         '/comentarios/',
         json={
@@ -183,17 +179,13 @@ def test_rejeita_comentario_original_inexistente(
     dados = {**dados_comentario(), 'comentario_pai': 999}
     resposta = client.post('/comentarios/', json=dados)
     assert resposta.status_code == HTTPStatus.NOT_FOUND
-    assert resposta.json() == {
-        'detail': 'Comentário original não encontrado'
-    }
+    assert resposta.json() == {'detail': 'Comentário original não encontrado'}
 
 
 def test_rejeita_alteracao_do_comentario_original(
     client, evento, usuario_comum
 ):
-    comentario = client.post(
-        '/comentarios/', json=dados_comentario()
-    ).json()
+    comentario = client.post('/comentarios/', json=dados_comentario()).json()
     dados = {**dados_comentario(), 'comentario_pai': 999}
     resposta = client.put(f'/comentarios/{comentario["id"]}', json=dados)
     assert resposta.status_code == HTTPStatus.BAD_REQUEST
@@ -223,9 +215,7 @@ def test_aceita_limites_de_caracteres(client, evento, usuario_comum):
         ('nota', 6),
     ],
 )
-def test_rejeita_campos_invalidos(
-    client, evento, usuario_comum, campo, valor
-):
+def test_rejeita_campos_invalidos(client, evento, usuario_comum, campo, valor):
     dados = {**dados_comentario(), campo: valor}
     resposta = client.post('/comentarios/', json=dados)
     assert resposta.status_code == HTTPStatus.UNPROCESSABLE_ENTITY

@@ -108,9 +108,7 @@ class Comentario_retorno_Schema(Comentario_Schema):
     id: int
     data_hora_feito: datetime
     nome_usuario: str
-    respostas: list['Comentario_retorno_Schema'] = Field(
-        default_factory=list
-    )
+    respostas: list['Comentario_retorno_Schema'] = Field(default_factory=list)
 
 
 class Inscricao_Schema(BaseModel):

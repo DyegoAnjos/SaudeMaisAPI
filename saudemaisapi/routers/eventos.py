@@ -7,7 +7,14 @@ from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from saudemaisapi.database import get_db
-from saudemaisapi.models import Categoria, Evento, Inscricao, Comentario
+from saudemaisapi.models import (
+    Categoria,
+    Comentario,
+    Evento,
+    Inscricao,
+    Bairro
+)
+
 from saudemaisapi.routers.comentarios import preparar_comentario
 from saudemaisapi.schemas import (
     Evento_retorno_Schema,
@@ -69,7 +76,6 @@ async def preparar_evento(evento: Evento, session: Session, request: Request):
         'data_hora_criacao': evento.data_hora_criacao,
         'data_hora_cancelamento': evento.data_hora_cancelamento,
         'data_hora_ultima_atualizacao': evento.data_hora_ultima_atualizacao,
-        
         # Injeção das inscrições calculadas
         'inscricoes_atuais': int(total_inscritos),
         'numero_participantes': int(total_inscritos),
@@ -80,37 +86,12 @@ async def preparar_evento(evento: Evento, session: Session, request: Request):
         'data': evento.data_hora_evento.date().isoformat(),
         'data_exibicao': evento.data_hora_evento.strftime('%d/%m/%Y'),
         'localizacao': evento.endereco,
-        
         # Injeção da lista de comentários processados
         'comentarios': comentarios_formatados,
     }
 
     # 5. Validação com Pydantic
     return Evento_retorno_Schema.model_validate(dados)
-
-
-# GET
-    comentarios = await session.scalars(
-        select(Comentario)
-        .where(
-            Comentario.evento == evento.id,
-            Comentario.comentario_pai.is_(None),
-        )
-        .order_by(Comentario.data_hora_feito.desc())
-    )
-    dados['foto_capa'] = str(
-        request.url_for('obter_arquivo', id_fotografia=evento.foto_evento)
-    )
-    dados['data'] = evento.data_hora_evento.date().isoformat()
-    dados['data_exibicao'] = evento.data_hora_evento.strftime('%d/%m/%Y')
-    dados['localizacao'] = evento.endereco
-    dados['numero_participantes'] = dados['inscricoes_atuais']
-    dados['categoria_nome'] = categoria.nome if categoria else None
-    dados['comentarios'] = [
-        await preparar_comentario(comentario, session)
-        for comentario in comentarios.all()
-    ]
-    return dados
 
 
 @router.get(
@@ -156,19 +137,43 @@ async def listar_eventos_por_id(
 @router.get(
     '/regiao/{regiao}',
     status_code=HTTPStatus.OK,
-    response_model=list[Evento_retorno_Schema],  # Espera uma lista na resposta
+    response_model=list[Evento_retorno_Schema],
 )
 async def listar_eventos_regiao(
     regiao: str, request: Request, session: Session
 ):
+    # 1. Busca se a região digitada corresponde a algum Bairro cadastrado
+    bairro_alvo = await session.scalar(
+        select(Bairro).where(Bairro.nome.ilike(f'%{regiao}%'))
+    )
+
+    filtros_busca = [Evento.endereco.ilike(f'%{regiao}%')]
+
+    # 2. Se o bairro for encontrado e tiver uma Área Programática (AP)
+    if bairro_alvo and bairro_alvo.area_programatica:
+        # Busca todos os bairros pertencentes à mesma AP
+        bairros_mesma_ap = (
+            await session.scalars(
+                select(Bairro.nome).where(
+                    Bairro.area_programatica == bairro_alvo.area_programatica
+                )
+            )
+        ).all()
+
+        # Adiciona os outros bairros da mesma AP nos filtros de busca
+        for nome_bairro in bairros_mesma_ap:
+            filtros_busca.append(Evento.endereco.ilike(f'%{nome_bairro}%'))
+
+    # 3. Executa a query unificada buscando eventos por termo ou por bairros da AP
     query = await session.scalars(
-        select(Evento).where(Evento.endereco.like(f'%{regiao}%'))
+        select(Evento).where(or_(*filtros_busca)).distinct()
     )
     eventos = query.all()
 
     if not eventos:
         raise HTTPException(
-            status_code=HTTPStatus.NOT_FOUND, detail='Evento não encontrado'
+            status_code=HTTPStatus.NOT_FOUND,
+            detail='Nenhum evento encontrado para esta região ou área programática'
         )
 
     return [
