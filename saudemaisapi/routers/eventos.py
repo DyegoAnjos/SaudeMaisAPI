@@ -180,6 +180,30 @@ async def listar_eventos_regiao(
         await preparar_evento(evento, session, request) for evento in eventos
     ]
 
+@router.get(
+    '/titulo/{titulo}',
+    status_code=HTTPStatus.OK,
+    response_model=list[Evento_retorno_Schema],
+)
+async def listar_eventos_titulo(
+    titulo: str, request: Request, session: Session
+):
+    # 1. Busca usando ilike (LOWER LIKE %titulo%) para ignorar maiúsculas/minúsculas
+    query = await session.scalars(
+        select(Evento).where(Evento.titulo.ilike(f'%{titulo}%'))
+    )
+    eventos = query.all()
+
+    # 2. Se a lista estiver vazia, lança 404
+    if not eventos:
+        raise HTTPException(
+            status_code=HTTPStatus.NOT_FOUND, detail='Evento não encontrado'
+        )
+
+    # 3. Retorna a lista formatada usando o helper preparar_evento para cada item
+    return [
+        await preparar_evento(evento, session, request) for evento in eventos
+    ]
 
 # POST
 @router.post(
